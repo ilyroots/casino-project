@@ -1,531 +1,558 @@
 /* ═══════════════════════════════════════════════
-   ULTIMATE TEXAS HOLD'EM POKER ENGINE
+   POKER HUB + MULTI-GAME ENGINE
+   Video Poker | Three Card | Ultimate Hold'em | Casino Hold'em
    ═══════════════════════════════════════════════ */
 
 (function() {
     'use strict';
 
-    // ── Card Data ──
+    // ═══════════════════════════════════════════════
+    // SHARED CARD UTILITIES
+    // ═══════════════════════════════════════════════
     const SUITS = ['♠','♥','♦','♣'];
     const RANKS = ['2','3','4','5','6','7','8','9','10','J','Q','K','A'];
-    const RANK_VALUES = { '2':2,'3':3,'4':4,'5':5,'6':6,'7':7,'8':8,'9':9,'10':10,'J':11,'Q':12,'K':13,'A':14 };
+    const RANK_VAL = { '2':2,'3':3,'4':4,'5':5,'6':6,'7':7,'8':8,'9':9,'10':10,'J':11,'Q':12,'K':13,'A':14 };
 
     function createDeck() {
-        const deck = [];
-        for (const suit of SUITS) {
-            for (const rank of RANKS) {
-                deck.push({ rank, suit, value: RANK_VALUES[rank] });
-            }
-        }
-        return deck;
+        const d = [];
+        for (const s of SUITS) for (const r of RANKS) d.push({ rank:r, suit:s, value:RANK_VAL[r] });
+        return d;
     }
-
-    function shuffle(deck) {
-        for (let i = deck.length - 1; i > 0; i--) {
-            const j = Math.floor(Math.random() * (i + 1));
-            [deck[i], deck[j]] = [deck[j], deck[i]];
-        }
-        return deck;
+    function shuffle(d) {
+        for (let i = d.length-1; i > 0; i--) { const j = Math.floor(Math.random()*(i+1)); [d[i],d[j]] = [d[j],d[i]]; }
+        return d;
     }
-
-    // ── Hand Evaluation ──
-    function evaluateHand(cards) {
-        // cards: array of {rank, suit, value}
-        const sorted = [...cards].sort((a,b) => b.value - a.value);
-        const isFlush = (() => {
-            const suits = {};
-            for (const c of sorted) suits[c.suit] = (suits[c.suit]||0)+1;
-            for (const s in suits) if (suits[s] >= 5) return s;
-            return null;
-        })();
-
-        const isStraight = (() => {
-            const uniq = [...new Set(sorted.map(c => c.value))];
-            if (uniq.length < 5) return null;
-            // Check for A-2-3-4-5 straight
-            if (uniq.includes(14) && uniq.includes(2) && uniq.includes(3) && uniq.includes(4) && uniq.includes(5)) {
-                return 5;
-            }
-            for (let i = 0; i <= uniq.length - 5; i++) {
-                if (uniq[i] - uniq[i+4] === 4) return uniq[i];
-            }
-            return null;
-        })();
-
-        const counts = {};
-        for (const c of sorted) counts[c.value] = (counts[c.value]||0)+1;
-        const countGroups = Object.entries(counts).map(([v,c]) => ({value:+v, count:c})).sort((a,b) => b.count-a.count || b.value-a.value);
-
-        // Royal flush
-        if (isFlush && isStraight === 14) return { rank: 10, name: 'Royal Flush', tiebreak: [14] };
-        // Straight flush
-        if (isFlush && isStraight) return { rank: 9, name: 'Straight Flush', tiebreak: [isStraight] };
-        // Four of a kind
-        if (countGroups[0].count === 4) return { rank: 8, name: 'Four of a Kind', tiebreak: [countGroups[0].value, countGroups[1].value] };
-        // Full house
-        if (countGroups[0].count === 3 && countGroups[1].count >= 2) return { rank: 7, name: 'Full House', tiebreak: [countGroups[0].value, countGroups[1].value] };
-        // Flush
-        if (isFlush) {
-            const flushCards = sorted.filter(c => c.suit === isFlush).slice(0,5);
-            return { rank: 6, name: 'Flush', tiebreak: flushCards.map(c => c.value) };
-        }
-        // Straight
-        if (isStraight) return { rank: 5, name: 'Straight', tiebreak: [isStraight] };
-        // Three of a kind
-        if (countGroups[0].count === 3) return { rank: 4, name: 'Three of a Kind', tiebreak: [countGroups[0].value, ...countGroups.slice(1).map(g=>g.value)] };
-        // Two pair
-        if (countGroups[0].count === 2 && countGroups[1].count === 2) return { rank: 3, name: 'Two Pair', tiebreak: [countGroups[0].value, countGroups[1].value, countGroups[2].value] };
-        // One pair
-        if (countGroups[0].count === 2) return { rank: 2, name: 'One Pair', tiebreak: [countGroups[0].value, ...countGroups.slice(1).map(g=>g.value)] };
-        // High card
-        return { rank: 1, name: 'High Card', tiebreak: sorted.slice(0,5).map(c => c.value) };
-    }
-
-    function compareHands(h1, h2) {
-        if (h1.rank !== h2.rank) return h1.rank - h2.rank;
-        for (let i = 0; i < h1.tiebreak.length; i++) {
-            if (h1.tiebreak[i] !== h2.tiebreak[i]) return h1.tiebreak[i] - h2.tiebreak[i];
-        }
-        return 0;
-    }
-
-    function best5From7(cards) {
-        let best = null;
-        // Check all C(7,5) combinations
-        for (let a = 0; a < 3; a++) {
-            for (let b = a+1; b < 4; b++) {
-                for (let c = b+1; c < 5; c++) {
-                    for (let d = c+1; d < 6; d++) {
-                        for (let e = d+1; e < 7; e++) {
-                            const hand = evaluateHand([cards[a],cards[b],cards[c],cards[d],cards[e]]);
-                            if (!best || compareHands(hand, best) > 0) best = hand;
-                        }
-                    }
-                }
-            }
-        }
-        return best;
-    }
-
-    // ── Payouts ──
-    const BLIND_PAYOUTS = {
-        10: 500, 9: 50, 8: 10, 7: 3, 6: 1.5, 5: 1, 4: 0, 3: 0, 2: 0, 1: 0
-    };
-
-    // ── State ──
-    let gameState = 'idle'; // idle, dealing, preflop, flop, turnriver, showdown
-    let deck = [];
-    let playerCards = [];
-    let dealerCards = [];
-    let community = [];
-    let pot = { ante: 0, play: 0, blind: 0, trips: 0 };
-    let selectedChip = 1.0;
-    let history = [];
-
-    // ── DOM refs ──
-    let $table, $playerCards, $dealerCards, $community, $potDisplay, $statusMsg;
-    let $btnDeal, $btnCheck, $btnBet, $btnFold, $btnClear;
-
-    // ── Init ──
-    function initPoker() {
-        $table = document.getElementById('pokerTable');
-        $playerCards = document.getElementById('pokerPlayerCards');
-        $dealerCards = document.getElementById('pokerDealerCards');
-        $community = document.getElementById('pokerCommunity');
-        $potDisplay = document.getElementById('pokerPot');
-        $statusMsg = document.getElementById('pokerStatus');
-        $btnDeal = document.getElementById('pokerDeal');
-        $btnCheck = document.getElementById('pokerCheck');
-        $btnBet = document.getElementById('pokerBet');
-        $btnFold = document.getElementById('pokerFold');
-        $btnClear = document.getElementById('pokerClear');
-
-        initChips();
-        initButtons();
-        updateBalanceDisplay();
-        loadHistory();
-        renderHistory();
-    }
-
-    function initChips() {
-        document.querySelectorAll('.poker-chip').forEach(chip => {
-            chip.addEventListener('click', () => {
-                document.querySelectorAll('.poker-chip').forEach(c => c.classList.remove('active'));
-                chip.classList.add('active');
-                selectedChip = parseFloat(chip.dataset.val);
-            });
-        });
-    }
-
-    function initButtons() {
-        $btnDeal?.addEventListener('click', startHand);
-        $btnCheck?.addEventListener('click', () => playerAction('check'));
-        $btnBet?.addEventListener('click', () => playerAction('bet'));
-        $btnFold?.addEventListener('click', () => playerAction('fold'));
-        $btnClear?.addEventListener('click', resetTable);
-    }
-
-    // ── Game Flow ──
-    async function startHand() {
-        if (gameState !== 'idle') return;
-        if (!window.getToken || !window.getToken()) {
-            showPokerToast('Login required to play', 'error');
-            window.showAuthModal && window.showAuthModal('login');
-            return;
-        }
-
-        const ante = selectedChip;
-        const blind = selectedChip * 0.5;
-        const total = ante + blind;
-        const currency = localStorage.getItem('selectedCurrency') || 'BTC';
-
-        // Deduct from balance
-        const res = await window.api('/api/balance?currency=' + currency);
-        const balData = await res.json();
-        const bal = balData.amount || 0;
-        if (bal < total) {
-            showPokerToast('Insufficient balance', 'error');
-            return;
-        }
-
-        // Deduct via API
-        const betRes = await window.api('/api/poker/bet', {
-            method: 'POST',
-            body: JSON.stringify({ currency, amount: total, action: 'deduct' })
-        });
-        const bData = await betRes.json();
-        if (bData.error) {
-            showPokerToast(bData.error, 'error');
-            return;
-        }
-
-        if (window.loadBalances) window.loadBalances();
-
-        // Setup game
-        gameState = 'dealing';
-        pot = { ante, play: 0, blind, trips: 0 };
-        updatePotDisplay();
-        setButtons(['none']);
-        setStatus('Dealing...');
-
-        deck = shuffle(createDeck());
-        playerCards = [deck.pop(), deck.pop()];
-        dealerCards = [deck.pop(), deck.pop()];
-        community = [];
-
-        // Clear table
-        $playerCards.innerHTML = '';
-        $dealerCards.innerHTML = '';
-        $community.innerHTML = '';
-
-        // Deal hole cards with animation
-        await dealCard($playerCards, playerCards[0], 'player', 0);
-        await dealCard($dealerCards, dealerCards[0], 'dealer', 0);
-        await dealCard($playerCards, playerCards[1], 'player', 1);
-        await dealCard($dealerCards, dealerCards[1], 'dealer', 1);
-
-        gameState = 'preflop';
-        setStatus('Pre-Flop: Check or Bet ' + formatCrypto(pot.ante * 2));
-        setButtons(['check', 'bet', 'fold']);
-        updateBalanceDisplay();
-    }
-
-    async function playerAction(action) {
-        if (gameState === 'preflop') {
-            if (action === 'check') {
-                setButtons(['none']);
-                setStatus('You checked. Dealing flop...');
-                await delay(600);
-                await dealFlop();
-                gameState = 'flop';
-                setStatus('Flop: Check or Bet ' + formatCrypto(pot.ante));
-                setButtons(['check', 'bet', 'fold']);
-            } else if (action === 'bet') {
-                const betAmount = pot.ante * 2;
-                pot.play += betAmount;
-                updatePotDisplay();
-                setButtons(['none']);
-                setStatus('You bet ' + formatCrypto(betAmount) + '. Dealing flop...');
-                await delay(600);
-                await dealFlop();
-                await dealTurnRiver();
-                await showdown();
-            } else if (action === 'fold') {
-                setButtons(['none']);
-                setStatus('You folded. Dealer wins.');
-                await delay(800);
-                revealDealerCards();
-                await endHand('dealer');
-            }
-        } else if (gameState === 'flop') {
-            if (action === 'check') {
-                setButtons(['none']);
-                setStatus('You checked. Dealing turn and river...');
-                await delay(600);
-                await dealTurnRiver();
-                await showdown();
-            } else if (action === 'bet') {
-                const betAmount = pot.ante;
-                pot.play += betAmount;
-                updatePotDisplay();
-                setButtons(['none']);
-                setStatus('You bet ' + formatCrypto(betAmount) + '. Dealing turn and river...');
-                await delay(600);
-                await dealTurnRiver();
-                await showdown();
-            } else if (action === 'fold') {
-                setButtons(['none']);
-                setStatus('You folded. Dealer wins.');
-                await delay(800);
-                revealDealerCards();
-                await endHand('dealer');
-            }
-        }
-    }
-
-    async function dealFlop() {
-        community.push(deck.pop(), deck.pop(), deck.pop());
-        await dealCard($community, community[0], 'community', 0);
-        await dealCard($community, community[1], 'community', 1);
-        await dealCard($community, community[2], 'community', 2);
-    }
-
-    async function dealTurnRiver() {
-        community.push(deck.pop());
-        await dealCard($community, community[3], 'community', 3);
-        community.push(deck.pop());
-        await dealCard($community, community[4], 'community', 4);
-    }
-
-    async function showdown() {
-        gameState = 'showdown';
-        setStatus('Showdown!');
-        revealDealerCards();
-        await delay(800);
-
-        const playerBest = best5From7([...playerCards, ...community]);
-        const dealerBest = best5From7([...dealerCards, ...community]);
-
-        // Highlight winning hand
-        const cmp = compareHands(playerBest, dealerBest);
-
-        setStatus(`You: ${playerBest.name} vs Dealer: ${dealerBest.name}`);
-        await delay(1200);
-
-        if (cmp > 0) {
-            await endHand('player', playerBest, dealerBest);
-        } else if (cmp < 0) {
-            await endHand('dealer', playerBest, dealerBest);
-        } else {
-            await endHand('push', playerBest, dealerBest);
-        }
-    }
-
-    async function endHand(winner, playerHand, dealerHand) {
-        const currency = localStorage.getItem('selectedCurrency') || 'BTC';
-        let winAmount = 0;
-        let message = '';
-
-        if (winner === 'player') {
-            // Dealer must qualify (pair of 4s or better)
-            const dealerQualifies = dealerHand.rank >= 2 && dealerHand.tiebreak[0] >= 4;
-
-            if (dealerQualifies) {
-                winAmount = pot.ante + pot.play + pot.blind;
-                message = `You win! ${playerHand.name} beats ${dealerHand.name}. Won ${formatCrypto(winAmount)} ${currency.toUpperCase()}!`;
-            } else {
-                // Ante pushes, play wins even money, blind pays according to hand
-                const blindPay = BLIND_PAYOUTS[playerHand.rank] || 0;
-                winAmount = pot.play * 2 + pot.blind * (1 + blindPay);
-                message = `Dealer doesn't qualify! You win ${formatCrypto(winAmount)} ${currency.toUpperCase()}!`;
-            }
-
-            // Credit winnings
-            if (winAmount > 0) {
-                await window.api('/api/poker/bet', {
-                    method: 'POST',
-                    body: JSON.stringify({ currency, amount: winAmount, action: 'credit' })
-                });
-            }
-            showPokerToast(message, 'success');
-        } else if (winner === 'dealer') {
-            message = `Dealer wins with ${dealerHand.name}.`;
-            showPokerToast(message, 'info');
-        } else {
-            // Push - return all bets
-            winAmount = pot.ante + pot.play + pot.blind;
-            await window.api('/api/poker/bet', {
-                method: 'POST',
-                body: JSON.stringify({ currency, amount: winAmount, action: 'credit' })
-            });
-            message = 'Push! Bets returned.';
-            showPokerToast(message, 'info');
-        }
-
-        if (window.loadBalances) window.loadBalances();
-        updateBalanceDisplay();
-
-        // Add to history
-        addToHistory({
-            result: winner,
-            playerHand: playerHand?.name || '',
-            dealerHand: dealerHand?.name || '',
-            amount: winner === 'player' ? winAmount : (winner === 'push' ? 0 : -(pot.ante + pot.play + pot.blind))
-        });
-
-        gameState = 'idle';
-        setButtons(['deal', 'clear']);
-        setStatus(message);
-    }
-
-    function resetTable() {
-        gameState = 'idle';
-        playerCards = [];
-        dealerCards = [];
-        community = [];
-        pot = { ante: 0, play: 0, blind: 0, trips: 0 };
-        $playerCards.innerHTML = '';
-        $dealerCards.innerHTML = '';
-        $community.innerHTML = '';
-        updatePotDisplay();
-        setStatus('Place your bet and click Deal');
-        setButtons(['deal', 'clear']);
-        updateBalanceDisplay();
-    }
-
-    // ── UI Helpers ──
-    async function dealCard(container, card, owner, index) {
-        const el = document.createElement('div');
-        const isRed = card.suit === '♥' || card.suit === '♦';
-        el.className = `poker-card ${owner} ${isRed ? 'red' : ''}`;
-        if (owner === 'dealer' && index === 1 && gameState !== 'showdown' && gameState !== 'idle') {
-            // Hole card - face down
-            el.classList.add('face-down');
-            el.innerHTML = '<div class="card-back"></div>';
-        } else {
-            el.innerHTML = `<div class="card-rank">${card.rank}</div><div class="card-suit">${card.suit}</div>`;
-        }
-        container.appendChild(el);
-
-        // Animate
-        el.style.opacity = '0';
-        el.style.transform = 'translateY(-40px) rotateY(90deg)';
-        await delay(50);
-        el.style.transition = 'all 0.35s cubic-bezier(0.34, 1.56, 0.64, 1)';
-        el.style.opacity = '1';
-        el.style.transform = 'translateY(0) rotateY(0)';
-        await delay(350);
-    }
-
-    function revealDealerCards() {
-        const cards = $dealerCards.querySelectorAll('.poker-card.dealer.face-down');
-        cards.forEach((el, i) => {
-            const card = dealerCards[i];
-            const isRed = card.suit === '♥' || card.suit === '♦';
-            el.classList.remove('face-down');
-            el.classList.toggle('red', isRed);
-            el.innerHTML = `<div class="card-rank">${card.rank}</div><div class="card-suit">${card.suit}</div>`;
-            el.style.transition = 'transform 0.4s';
-            el.style.transform = 'rotateY(180deg)';
-            setTimeout(() => { el.style.transform = 'rotateY(0)'; }, 50);
-        });
-    }
-
-    function setButtons(active) {
-        const all = { deal: $btnDeal, check: $btnCheck, bet: $btnBet, fold: $btnFold, clear: $btnClear };
-        for (const [name, btn] of Object.entries(all)) {
-            if (!btn) continue;
-            btn.disabled = !active.includes(name);
-            btn.style.opacity = active.includes(name) ? '1' : '0.35';
-            btn.style.pointerEvents = active.includes(name) ? 'auto' : 'none';
-        }
-    }
-
-    function setStatus(msg) {
-        if ($statusMsg) $statusMsg.textContent = msg;
-    }
-
-    function updatePotDisplay() {
-        if ($potDisplay) {
-            const total = pot.ante + pot.play + pot.blind + pot.trips;
-            $potDisplay.textContent = formatCrypto(total);
-        }
-    }
-
-    function updateBalanceDisplay() {
-        const currency = localStorage.getItem('selectedCurrency') || 'BTC';
-        const el = document.getElementById('pokerBalance');
-        if (!el || !window.api) return;
-        window.api('/api/balance?currency=' + currency)
-            .then(r => r.json())
-            .then(d => {
-                el.textContent = `${formatCrypto(d.amount || 0)} ${currency.toUpperCase()}`;
-            })
-            .catch(() => { el.textContent = '--'; });
-    }
-
     function formatCrypto(v) {
         if (v >= 1000) return v.toFixed(2);
         if (v >= 1) return v.toFixed(4);
         return v.toFixed(6);
     }
-
-    function delay(ms) {
-        return new Promise(r => setTimeout(r, ms));
+    function delay(ms) { return new Promise(r => setTimeout(r, ms)); }
+    function showToast(msg, type) { if (window.showToast) window.showToast(msg, type); }
+    async function apiDeduce(amt) {
+        const curr = localStorage.getItem('selectedCurrency') || 'BTC';
+        const res = await window.api('/api/poker/bet', { method:'POST', body:JSON.stringify({currency:curr, amount:amt, action:'deduct'}) });
+        const d = await res.json(); if (d.error) throw new Error(d.error); return d;
+    }
+    async function apiCredit(amt) {
+        const curr = localStorage.getItem('selectedCurrency') || 'BTC';
+        const res = await window.api('/api/poker/bet', { method:'POST', body:JSON.stringify({currency:curr, amount:amt, action:'credit'}) });
+        const d = await res.json(); if (d.error) throw new Error(d.error); return d;
+    }
+    async function getBal() {
+        const curr = localStorage.getItem('selectedCurrency') || 'BTC';
+        const r = await window.api('/api/balance?currency='+curr); const d = await r.json(); return d.amount||0;
+    }
+    function updateBalEl(id) {
+        getBal().then(b => { const el = document.getElementById(id); if (el) el.textContent = formatCrypto(b)+' '+(localStorage.getItem('selectedCurrency')||'BTC').toUpperCase(); }).catch(()=>{});
     }
 
-    function showPokerToast(msg, type) {
-        if (window.showToast) window.showToast(msg, type);
+    // Hand evaluation (shared)
+    function evaluate(cards) {
+        const sorted = [...cards].sort((a,b)=>b.value-a.value);
+        const suitCounts = {};
+        for (const c of sorted) suitCounts[c.suit] = (suitCounts[c.suit]||0)+1;
+        const flushSuit = Object.entries(suitCounts).find(([s,n])=>n>=3)?.[0] || null; // 3+ for 3-card
+        const uniqVals = [...new Set(sorted.map(c=>c.value))].sort((a,b)=>b-a);
+        let straightHigh = null;
+        if (uniqVals.length >= 3) {
+            for (let i=0; i<=uniqVals.length-3; i++) { if (uniqVals[i]-uniqVals[i+2]===2) { straightHigh = uniqVals[i]; break; } }
+            if (!straightHigh && uniqVals.includes(14) && uniqVals.includes(3) && uniqVals.includes(2)) straightHigh = 3; // A-2-3
+        }
+        const counts = {};
+        for (const c of sorted) counts[c.value] = (counts[c.value]||0)+1;
+        const groups = Object.entries(counts).map(([v,c])=>({value:+v,count:c})).sort((a,b)=>b.count-a.count||b.value-a.value);
+
+        if (flushSuit && straightHigh) return {rank:10,name:'Straight Flush',tb:[straightHigh]};
+        if (groups[0].count===3) return {rank:9,name:'Three of a Kind',tb:[groups[0].value]};
+        if (flushSuit) return {rank:8,name:'Flush',tb:sorted.filter(c=>c.suit===flushSuit).slice(0,3).map(c=>c.value)};
+        if (straightHigh) return {rank:7,name:'Straight',tb:[straightHigh]};
+        if (groups[0].count===2) return {rank:6,name:'Pair',tb:[groups[0].value]};
+        return {rank:1,name:'High Card',tb:sorted.slice(0,3).map(c=>c.value)};
+    }
+    function evaluate5(cards) {
+        // Full 5-7 card evaluation for Hold'em
+        const sorted = [...cards].sort((a,b)=>b.value-a.value);
+        const suitCounts = {}; for (const c of sorted) suitCounts[c.suit]=(suitCounts[c.suit]||0)+1;
+        const flushSuit = Object.entries(suitCounts).find(([s,n])=>n>=5)?.[0]||null;
+        const uniqVals = [...new Set(sorted.map(c=>c.value))].sort((a,b)=>b-a);
+        let straightHigh = null;
+        if (uniqVals.length>=5) {
+            for (let i=0;i<=uniqVals.length-5;i++){ if (uniqVals[i]-uniqVals[i+4]===4){ straightHigh=uniqVals[i]; break; } }
+            if (!straightHigh && uniqVals.includes(14)&&uniqVals.includes(5)&&uniqVals.includes(4)&&uniqVals.includes(3)&&uniqVals.includes(2)) straightHigh=5;
+        }
+        const counts = {}; for (const c of sorted) counts[c.value]=(counts[c.value]||0)+1;
+        const groups = Object.entries(counts).map(([v,c])=>({value:+v,count:c})).sort((a,b)=>b.count-a.count||b.value-a.value);
+
+        if (flushSuit && straightHigh && straightHigh===14) return {rank:10,name:'Royal Flush',tb:[14]};
+        if (flushSuit && straightHigh) return {rank:9,name:'Straight Flush',tb:[straightHigh]};
+        if (groups[0].count===4) return {rank:8,name:'Four of a Kind',tb:[groups[0].value,groups[1]?.value||0]};
+        if (groups[0].count===3 && groups[1].count>=2) return {rank:7,name:'Full House',tb:[groups[0].value,groups[1].value]};
+        if (flushSuit) return {rank:6,name:'Flush',tb:sorted.filter(c=>c.suit===flushSuit).slice(0,5).map(c=>c.value)};
+        if (straightHigh) return {rank:5,name:'Straight',tb:[straightHigh]};
+        if (groups[0].count===3) return {rank:4,name:'Three of a Kind',tb:[groups[0].value,...groups.slice(1).map(g=>g.value)]};
+        if (groups[0].count===2 && groups[1].count===2) return {rank:3,name:'Two Pair',tb:[groups[0].value,groups[1].value,groups[2]?.value||0]};
+        if (groups[0].count===2) return {rank:2,name:'One Pair',tb:[groups[0].value,...groups.slice(1).map(g=>g.value)]};
+        return {rank:1,name:'High Card',tb:sorted.slice(0,5).map(c=>c.value)};
+    }
+    function best5From7(cards) {
+        let best = null;
+        for (let a=0;a<3;a++)for(let b=a+1;b<4;b++)for(let c=b+1;c<5;c++)for(let d=c+1;d<6;d++)for(let e=d+1;e<7;e++){
+            const h = evaluate5([cards[a],cards[b],cards[c],cards[d],cards[e]]);
+            if (!best || cmpHand(h,best)>0) best=h;
+        }
+        return best;
+    }
+    function cmpHand(h1,h2) {
+        if (h1.rank!==h2.rank) return h1.rank-h2.rank;
+        for (let i=0;i<h1.tb.length;i++) if (h1.tb[i]!==h2.tb[i]) return h1.tb[i]-h2.tb[i];
+        return 0;
     }
 
-    // ── History ──
-    function addToHistory(entry) {
-        const saved = JSON.parse(localStorage.getItem('pokerHistory') || '[]');
-        saved.unshift({ ...entry, time: new Date().toISOString() });
-        if (saved.length > 50) saved.pop();
-        localStorage.setItem('pokerHistory', JSON.stringify(saved));
-        renderHistory();
+    // ═══════════════════════════════════════════════
+    // HUB NAVIGATION
+    // ═══════════════════════════════════════════════
+    function showScreen(name) {
+        document.getElementById('pokerHub').style.display = name==='hub'?'block':'none';
+        ['videopoker','threecard','ultimate','casino'].forEach(s=>{
+            const el = document.getElementById('pokerScreen-'+s);
+            if (el) el.style.display = s===name?'block':'none';
+        });
+        if (name!=='hub') {
+            if (name==='videopoker') initVideoPoker();
+            if (name==='threecard') initThreeCard();
+            if (name==='ultimate') initUltimate();
+            if (name==='casino') initCasinoHoldem();
+        }
+    }
+    document.querySelectorAll('.poker-hub-card[data-poker]').forEach(card=>{
+        card.addEventListener('click',()=>{
+            const game = card.dataset.poker;
+            if (['videopoker','threecard','ultimate','casino'].includes(game)) showScreen(game);
+            else showToast('Coming soon!','info');
+        });
+    });
+    document.getElementById('vpBack')?.addEventListener('click',()=>showScreen('hub'));
+    document.getElementById('tcpBack')?.addEventListener('click',()=>showScreen('hub'));
+    document.getElementById('uthBack')?.addEventListener('click',()=>showScreen('hub'));
+    document.getElementById('chBack')?.addEventListener('click',()=>showScreen('hub'));
+
+    // ═══════════════════════════════════════════════
+    // VIDEO POKER — Jacks or Better
+    // ═══════════════════════════════════════════════
+    const VP_PAYOUTS = {
+        10: [250,500,750,1000,4000], // Royal Flush (800x with max coins = 4000)
+        9:  [50,100,150,200,250],
+        8:  [25,50,75,100,125],
+        7:  [9,18,27,36,45],
+        6:  [6,12,18,24,30],
+        5:  [4,8,12,16,20],
+        4:  [3,6,9,12,15],
+        3:  [2,4,6,8,10],
+        2:  [1,2,3,4,5],
+    };
+    const VP_HAND_NAMES = {
+        10:'Royal Flush',9:'Straight Flush',8:'Four of a Kind',7:'Full House',
+        6:'Flush',5:'Straight',4:'Three of a Kind',3:'Two Pair',2:'Jacks or Better'
+    };
+    let vpDeck=[], vpHand=[], vpHeld=[], vpCoins=2, vpState='idle';
+
+    function initVideoPoker() {
+        renderVPPaytable();
+        updateBalEl('vpBalance');
+        document.getElementById('vpDeal').onclick = vpDeal;
+        document.getElementById('vpDraw').onclick = vpDraw;
+        document.querySelectorAll('.vp-coin').forEach(btn=>{
+            btn.onclick = () => { document.querySelectorAll('.vp-coin').forEach(b=>b.classList.remove('active')); btn.classList.add('active'); vpCoins = +btn.dataset.coins; renderVPPaytable(); };
+        });
+    }
+    function renderVPPaytable() {
+        const el = document.getElementById('vpPaytable');
+        el.innerHTML = Object.entries(VP_HAND_NAMES).map(([rank,name])=>{
+            const pay = VP_PAYOUTS[rank][vpCoins-1];
+            return `<div class="vp-pt-row ${vpCoins>0?'':'}"><span>${name}</span><span>${pay}</span></div>`;
+        }).reverse().join('');
+    }
+    async function vpDeal() {
+        if (vpState!=='idle') return;
+        if (!window.getToken||!window.getToken()){ showToast('Login required','error'); window.showAuthModal?.('login'); return; }
+        const bet = vpCoins * 0.1; // 0.1 per coin
+        try { await apiDeduce(bet); } catch(e){ showToast(e.message,'error'); return; }
+        if (window.loadBalances) window.loadBalances();
+        updateBalEl('vpBalance');
+        vpState='dealt'; vpDeck=shuffle(createDeck()); vpHand=[vpDeck.pop(),vpDeck.pop(),vpDeck.pop(),vpDeck.pop(),vpDeck.pop()]; vpHeld=[false,false,false,false,false];
+        document.getElementById('vpResult').textContent=''; document.getElementById('vpDraw').style.display='inline-block'; document.getElementById('vpDeal').style.display='none';
+        renderVPCards();
+    }
+    function renderVPCards() {
+        const container = document.getElementById('vpCards'); container.innerHTML='';
+        vpHand.forEach((card,i)=>{
+            const isRed = card.suit==='♥'||card.suit==='♦';
+            const held = vpHeld[i];
+            const el = document.createElement('div');
+            el.className = `vp-card ${isRed?'red':''} ${held?'held':''}`;
+            el.innerHTML = `<div class="vp-card-inner"><div class="card-rank">${card.rank}</div><div class="card-suit">${card.suit}</div></div><div class="vp-hold-label">HELD</div>`;
+            if (vpState==='dealt') el.onclick = () => { vpHeld[i]=!vpHeld[i]; renderVPCards(); };
+            container.appendChild(el);
+        });
+    }
+    async function vpDraw() {
+        if (vpState!=='dealt') return;
+        vpState='done';
+        for (let i=0;i<5;i++) if (!vpHeld[i]) vpHand[i]=vpDeck.pop();
+        renderVPCards();
+        // Evaluate
+        const hand = evaluate5(vpHand);
+        let win = 0, msg = hand.name;
+        if (hand.rank>=2) {
+            win = (VP_PAYOUTS[hand.rank]||[0,0,0,0,0])[vpCoins-1] * 0.1;
+            msg += ` — Win ${formatCrypto(win)}!`;
+            await apiCredit(win);
+            if (window.loadBalances) window.loadBalances();
+            showToast('Video Poker: '+msg,'success');
+        } else {
+            msg += ' — No win';
+            showToast('Video Poker: '+msg,'info');
+        }
+        document.getElementById('vpResult').textContent = msg;
+        document.getElementById('vpDraw').style.display='none'; document.getElementById('vpDeal').style.display='inline-block';
+        updateBalEl('vpBalance');
+        vpState='idle';
     }
 
-    function renderHistory() {
-        const container = document.getElementById('pokerHistory');
-        if (!container) return;
-        const saved = JSON.parse(localStorage.getItem('pokerHistory') || '[]');
-        container.innerHTML = saved.slice(0, 20).map(h => {
-            const isWin = h.result === 'player';
-            const isPush = h.result === 'push';
-            const cls = isWin ? 'win' : (isPush ? 'push' : 'loss');
-            return `<div class="ph-row ${cls}">
-                <span>${h.playerHand || ''} vs ${h.dealerHand || ''}</span>
-                <span>${isWin ? '+' : (isPush ? '' : '-')}${formatCrypto(Math.abs(h.amount))}</span>
-            </div>`;
-        }).join('');
+
+    // ═══════════════════════════════════════════════
+    // THREE CARD POKER
+    // ═══════════════════════════════════════════════
+    const TCP_PAIRPLUS = { 10:40, 9:30, 8:6, 7:3, 6:1 };
+    let tcpDeck=[], tcpPlayer=[], tcpDealer=[], tcpAnte=0, tcpPair=0, tcpState='idle';
+
+    function initThreeCard() {
+        updateBalEl('tcpBalance');
+        document.getElementById('tcpDeal').onclick = tcpDeal;
+        document.getElementById('tcpPlay').onclick = ()=>tcpAction('play');
+        document.getElementById('tcpFold').onclick = ()=>tcpAction('fold');
+        document.getElementById('tcpClear').onclick = tcpReset;
+        document.querySelectorAll('.tcp-chip').forEach(c=>{
+            c.onclick = () => { document.querySelectorAll('.tcp-chip').forEach(x=>x.classList.remove('active')); c.classList.add('active'); };
+        });
+        tcpReset();
+    }
+    function tcpReset() {
+        tcpState='idle'; tcpAnte=0; tcpPair=0;
+        document.getElementById('tcpAnteVal').textContent='0.00';
+        document.getElementById('tcpPairVal').textContent='0.00';
+        document.getElementById('tcpPlayerCards').innerHTML='';
+        document.getElementById('tcpDealerCards').innerHTML='';
+        document.getElementById('tcpStatus').textContent='Place Ante bet and click Deal';
+        setTCPButtons(['deal']);
+    }
+    async function tcpDeal() {
+        if (tcpState!=='idle') return;
+        if (!window.getToken||!window.getToken()){ showToast('Login required','error'); return; }
+        const chipVal = parseFloat(document.querySelector('.tcp-chip.active')?.dataset.val||0.5);
+        tcpAnte = chipVal;
+        const total = tcpAnte + tcpPair;
+        try { await apiDeduce(total); } catch(e){ showToast(e.message,'error'); return; }
+        if (window.loadBalances) window.loadBalances();
+        updateBalEl('tcpBalance');
+        tcpState='dealt'; tcpDeck=shuffle(createDeck());
+        tcpPlayer=[tcpDeck.pop(),tcpDeck.pop(),tcpDeck.pop()];
+        tcpDealer=[tcpDeck.pop(),tcpDeck.pop(),tcpDeck.pop()];
+        document.getElementById('tcpAnteVal').textContent=formatCrypto(tcpAnte);
+        document.getElementById('tcpPlayerCards').innerHTML='';
+        document.getElementById('tcpDealerCards').innerHTML='';
+        for (let i=0;i<3;i++) { await delay(200); await tcpAnimCard(document.getElementById('tcpPlayerCards'),tcpPlayer[i]); }
+        for (let i=0;i<3;i++) { await delay(200); await tcpAnimCard(document.getElementById('tcpDealerCards'),tcpDealer[i],true); }
+        const ph = evaluate(tcpPlayer);
+        document.getElementById('tcpStatus').textContent = `Your hand: ${ph.name}. Play or Fold?`;
+        setTCPButtons(['play','fold']);
+    }
+    async function tcpAnimCard(container,card,faceDown=false) {
+        const el=document.createElement('div');
+        el.className='tcp-card'+(faceDown?' face-down':'');
+        if (!faceDown) { const isRed=card.suit==='♥'||card.suit==='♦'; el.classList.add(isRed?'red':'black'); el.innerHTML=`<div class="tcp-rank">${card.rank}</div><div class="tcp-suit">${card.suit}</div>`; }
+        else el.innerHTML='<div class="tcp-back"></div>';
+        el.style.opacity='0'; el.style.transform='translateY(-30px)';
+        container.appendChild(el);
+        await delay(30);
+        el.style.transition='all 0.35s cubic-bezier(0.34,1.56,0.64,1)';
+        el.style.opacity='1'; el.style.transform='translateY(0)';
+        await delay(350);
+    }
+    async function tcpAction(action) {
+        if (tcpState!=='dealt') return;
+        tcpState='done';
+        // Reveal dealer
+        const dCards = document.getElementById('tcpDealerCards').querySelectorAll('.tcp-card.face-down');
+        dCards.forEach((el,i)=>{
+            const c=tcpDealer[i]; const isRed=c.suit==='♥'||c.suit==='♦';
+            el.classList.remove('face-down'); el.classList.add(isRed?'red':'black');
+            el.innerHTML=`<div class="tcp-rank">${c.rank}</div><div class="tcp-suit">${c.suit}</div>`;
+        });
+        await delay(500);
+        const pHand = evaluate(tcpPlayer); const dHand = evaluate(tcpDealer);
+        let win=0, msg='';
+        if (action==='fold') {
+            msg = `Folded. Lost ${formatCrypto(tcpAnte)}.`;
+            showToast('Three Card: '+msg,'info');
+        } else {
+            // Dealer needs Queen high or better to qualify
+            const dealerQualifies = dHand.rank>=6 || (dHand.rank===1 && dHand.tb[0]>=12);
+            const cmp = cmpHand(pHand,dHand);
+            if (!dealerQualifies) {
+                win = tcpAnte * 2; // Ante wins even money, play pushes
+                msg = `Dealer doesn't qualify! Won ${formatCrypto(tcpAnte)}.`;
+            } else if (cmp>0) {
+                win = tcpAnte * 4; // Ante + Play both win even money
+                msg = `You win! ${pHand.name} beats ${dHand.name}. Won ${formatCrypto(tcpAnte*2)}.`;
+            } else if (cmp<0) {
+                msg = `Dealer wins with ${dHand.name}.`;
+            } else {
+                win = tcpAnte * 2; // Push
+                msg = 'Push! Bets returned.';
+            }
+            if (win>0) { await apiCredit(win); if(window.loadBalances)window.loadBalances(); showToast('Three Card: '+msg,'success'); }
+            else showToast('Three Card: '+msg,'info');
+        }
+        document.getElementById('tcpStatus').textContent = msg;
+        updateBalEl('tcpBalance');
+        setTCPButtons(['deal','clear']);
+    }
+    function setTCPButtons(active) {
+        const map={deal:document.getElementById('tcpDeal'),play:document.getElementById('tcpPlay'),fold:document.getElementById('tcpFold'),clear:document.getElementById('tcpClear')};
+        for (const [k,btn] of Object.entries(map)) { if(!btn)continue; btn.disabled=!active.includes(k); btn.style.opacity=active.includes(k)?'1':'0.35'; btn.style.pointerEvents=active.includes(k)?'auto':'none'; }
     }
 
-    function loadHistory() {
-        renderHistory();
+    // ═══════════════════════════════════════════════
+    // ULTIMATE TEXAS HOLD'EM
+    // ═══════════════════════════════════════════════
+    const UTH_BLIND = { 10:500, 9:50, 8:10, 7:3, 6:1.5, 5:1 };
+    let uthDeck=[], uthPlayer=[], uthDealer=[], uthCommunity=[], uthPot={ante:0,play:0,blind:0}, uthChip=0.5, uthState='idle';
+
+    function initUltimate() {
+        updateBalEl('uthBalance'); uthReset();
+        document.getElementById('uthDeal').onclick = uthDeal;
+        document.getElementById('uthCheck').onclick = ()=>uthAction('check');
+        document.getElementById('uthBet').onclick = ()=>uthAction('bet');
+        document.getElementById('uthFold').onclick = ()=>uthAction('fold');
+        document.getElementById('uthClear').onclick = uthReset;
+        document.querySelectorAll('.uth-chip').forEach(c=>{
+            c.onclick = () => { document.querySelectorAll('.uth-chip').forEach(x=>x.classList.remove('active')); c.classList.add('active'); uthChip=parseFloat(c.dataset.val); };
+        });
+    }
+    function uthReset() {
+        uthState='idle'; uthPot={ante:0,play:0,blind:0};
+        document.getElementById('uthPlayerCards').innerHTML='';
+        document.getElementById('uthDealerCards').innerHTML='';
+        document.getElementById('uthCommunity').innerHTML='';
+        document.getElementById('uthPot').textContent='0.00';
+        document.getElementById('uthStatus').textContent='Place your bet and click Deal';
+        setUTHButtons(['deal','clear']);
+    }
+    async function uthDeal() {
+        if (uthState!=='idle') return;
+        if (!window.getToken||!window.getToken()){ showToast('Login required','error'); return; }
+        uthChip = parseFloat(document.querySelector('.uth-chip.active')?.dataset.val||0.5);
+        const total = uthChip + uthChip*0.5; // ante + blind
+        try { await apiDeduce(total); } catch(e){ showToast(e.message,'error'); return; }
+        if (window.loadBalances) window.loadBalances();
+        updateBalEl('uthBalance');
+        uthState='dealing'; uthPot={ante:uthChip,play:0,blind:uthChip*0.5};
+        document.getElementById('uthPot').textContent = formatCrypto(uthPot.ante+uthPot.play+uthPot.blind);
+        setUTHButtons(['none']); document.getElementById('uthStatus').textContent='Dealing...';
+        uthDeck=shuffle(createDeck()); uthPlayer=[uthDeck.pop(),uthDeck.pop()]; uthDealer=[uthDeck.pop(),uthDeck.pop()]; uthCommunity=[];
+        document.getElementById('uthPlayerCards').innerHTML=''; document.getElementById('uthDealerCards').innerHTML=''; document.getElementById('uthCommunity').innerHTML='';
+        await uthAnimCard(document.getElementById('uthPlayerCards'),uthPlayer[0]); await delay(100);
+        await uthAnimCard(document.getElementById('uthDealerCards'),uthDealer[0],true); await delay(100);
+        await uthAnimCard(document.getElementById('uthPlayerCards'),uthPlayer[1]); await delay(100);
+        await uthAnimCard(document.getElementById('uthDealerCards'),uthDealer[1],true);
+        uthState='preflop';
+        document.getElementById('uthStatus').textContent = `Pre-Flop: Check or Bet ${formatCrypto(uthChip*2)}`;
+        setUTHButtons(['check','bet','fold']);
+    }
+    async function uthAnimCard(container,card,faceDown=false) {
+        const el=document.createElement('div');
+        el.className='poker-card'+(faceDown?' face-down':'');
+        if (!faceDown) { const isRed=card.suit==='♥'||card.suit==='♦'; el.classList.add(isRed?'red':'black'); el.innerHTML=`<div class="card-rank">${card.rank}</div><div class="card-suit">${card.suit}</div>`; }
+        else el.innerHTML='<div class="card-back"></div>';
+        el.style.opacity='0'; el.style.transform='translateY(-40px) rotateY(90deg)';
+        container.appendChild(el); await delay(50);
+        el.style.transition='all 0.35s cubic-bezier(0.34,1.56,0.64,1)';
+        el.style.opacity='1'; el.style.transform='translateY(0) rotateY(0)';
+        await delay(350);
+    }
+    async function uthAction(action) {
+        if (action==='check' && uthState==='preflop') {
+            setUTHButtons(['none']); document.getElementById('uthStatus').textContent='You checked. Dealing flop...';
+            await delay(600); await uthDealFlop();
+            uthState='flop'; document.getElementById('uthStatus').textContent=`Flop: Check or Bet ${formatCrypto(uthChip)}`; setUTHButtons(['check','bet','fold']);
+        } else if (action==='bet' && uthState==='preflop') {
+            const bet=uthChip*2; uthPot.play+=bet;
+            document.getElementById('uthPot').textContent=formatCrypto(uthPot.ante+uthPot.play+uthPot.blind);
+            setUTHButtons(['none']); document.getElementById('uthStatus').textContent=`Bet ${formatCrypto(bet)}. Dealing...`;
+            await delay(600); await uthDealFlop(); await delay(300); await uthDealTurnRiver(); await uthShowdown();
+        } else if (action==='check' && uthState==='flop') {
+            setUTHButtons(['none']); document.getElementById('uthStatus').textContent='Checking... Dealing turn & river';
+            await delay(600); await uthDealTurnRiver(); await uthShowdown();
+        } else if (action==='bet' && uthState==='flop') {
+            const bet=uthChip; uthPot.play+=bet;
+            document.getElementById('uthPot').textContent=formatCrypto(uthPot.ante+uthPot.play+uthPot.blind);
+            setUTHButtons(['none']); document.getElementById('uthStatus').textContent=`Bet ${formatCrypto(bet)}. Dealing...`;
+            await delay(600); await uthDealTurnRiver(); await uthShowdown();
+        } else if (action==='fold') {
+            setUTHButtons(['none']); document.getElementById('uthStatus').textContent='Folded. Dealer wins.';
+            await delay(800); await uthRevealDealer(); await uthEnd('dealer');
+        }
+    }
+    async function uthDealFlop() { uthCommunity.push(uthDeck.pop(),uthDeck.pop(),uthDeck.pop()); for(const c of uthCommunity.slice(0,3)) await uthAnimCard(document.getElementById('uthCommunity'),c); }
+    async function uthDealTurnRiver() { uthCommunity.push(uthDeck.pop()); await uthAnimCard(document.getElementById('uthCommunity'),uthCommunity[3]); await delay(200); uthCommunity.push(uthDeck.pop()); await uthAnimCard(document.getElementById('uthCommunity'),uthCommunity[4]); }
+    async function uthShowdown() {
+        uthState='showdown'; document.getElementById('uthStatus').textContent='Showdown!';
+        await uthRevealDealer(); await delay(800);
+        const pb = best5From7([...uthPlayer,...uthCommunity]);
+        const db = best5From7([...uthDealer,...uthCommunity]);
+        const cmp = cmpHand(pb,db);
+        document.getElementById('uthStatus').textContent=`You: ${pb.name} vs Dealer: ${db.name}`; await delay(1200);
+        if (cmp>0) await uthEnd('player',pb,db); else if (cmp<0) await uthEnd('dealer',pb,db); else await uthEnd('push',pb,db);
+    }
+    async function uthRevealDealer() {
+        document.getElementById('uthDealerCards').querySelectorAll('.poker-card.face-down').forEach((el,i)=>{
+            const c=uthDealer[i]; const isRed=c.suit==='♥'||c.suit==='♦';
+            el.classList.remove('face-down'); el.classList.toggle('red',isRed);
+            el.innerHTML=`<div class="card-rank">${c.rank}</div><div class="card-suit">${c.suit}</div>`;
+        });
+    }
+    async function uthEnd(winner,ph,dh) {
+        const curr = localStorage.getItem('selectedCurrency')||'BTC'; let win=0, msg='';
+        if (winner==='player') {
+            const dq = dh.rank>=2 && dh.tb[0]>=4;
+            if (dq) { win = uthPot.ante*2 + uthPot.play*2 + uthPot.blind*2; msg=`Win! ${ph.name} beats ${dh.name}. Won ${formatCrypto(win)}!`; }
+            else { const bp = UTH_BLIND[ph.rank]||0; win = uthPot.play*2 + uthPot.blind*(1+bp); msg=`Dealer doesn't qualify! Won ${formatCrypto(win)}!`; }
+            if (win>0) { await apiCredit(win); if(window.loadBalances)window.loadBalances(); showToast(msg,'success'); }
+        } else if (winner==='push') {
+            win = uthPot.ante+uthPot.play+uthPot.blind; await apiCredit(win); if(window.loadBalances)window.loadBalances();
+            msg='Push! Bets returned.'; showToast(msg,'info');
+        } else { msg=`Dealer wins with ${dh.name}.`; showToast(msg,'info'); }
+        document.getElementById('uthStatus').textContent=msg; updateBalEl('uthBalance');
+        setUTHButtons(['deal','clear']); uthState='idle';
+    }
+    function setUTHButtons(active) {
+        const map={deal:document.getElementById('uthDeal'),check:document.getElementById('uthCheck'),bet:document.getElementById('uthBet'),fold:document.getElementById('uthFold'),clear:document.getElementById('uthClear')};
+        for (const [k,btn] of Object.entries(map)) { if(!btn)continue; btn.disabled=!active.includes(k); btn.style.opacity=active.includes(k)?'1':'0.35'; btn.style.pointerEvents=active.includes(k)?'auto':'none'; }
     }
 
-    // ── Expose ──
-    window.initPoker = initPoker;
-    window.updatePokerBalance = updateBalanceDisplay;
+    // ═══════════════════════════════════════════════
+    // CASINO HOLD'EM (Simplified)
+    // ═══════════════════════════════════════════════
+    let chDeck=[], chPlayer=[], chDealer=[], chCommunity=[], chPot={ante:0,call:0}, chChip=0.5, chState='idle';
 
-    // Auto-init
-    const observer = new MutationObserver((mutations) => {
-        mutations.forEach(m => {
-            if (m.target.dataset?.view === 'poker' && m.target.classList?.contains('active')) {
-                if (!window._pokerInit) { initPoker(); window._pokerInit = true; }
-                updateBalanceDisplay();
+    function initCasinoHoldem() {
+        updateBalEl('chBalance'); chReset();
+        document.getElementById('chDeal').onclick = chDeal;
+        document.getElementById('chCall').onclick = ()=>chAction('call');
+        document.getElementById('chFold').onclick = ()=>chAction('fold');
+        document.getElementById('chClear').onclick = chReset;
+        document.querySelectorAll('.ch-chip').forEach(c=>{
+            c.onclick = () => { document.querySelectorAll('.ch-chip').forEach(x=>x.classList.remove('active')); c.classList.add('active'); chChip=parseFloat(c.dataset.val); };
+        });
+    }
+    function chReset() {
+        chState='idle'; chPot={ante:0,call:0};
+        document.getElementById('chPlayerCards').innerHTML='';
+        document.getElementById('chDealerCards').innerHTML='';
+        document.getElementById('chCommunity').innerHTML='';
+        document.getElementById('chPot').textContent='0.00';
+        document.getElementById('chStatus').textContent='Place Ante + Call bets, then click Deal';
+        setCHButtons(['deal','clear']);
+    }
+    async function chDeal() {
+        if (chState!=='idle') return;
+        if (!window.getToken||!window.getToken()){ showToast('Login required','error'); return; }
+        chChip = parseFloat(document.querySelector('.ch-chip.active')?.dataset.val||0.5);
+        const total = chChip + chChip; // ante + call
+        try { await apiDeduce(total); } catch(e){ showToast(e.message,'error'); return; }
+        if (window.loadBalances) window.loadBalances();
+        updateBalEl('chBalance');
+        chState='dealt'; chPot={ante:chChip,call:chChip};
+        document.getElementById('chPot').textContent = formatCrypto(chPot.ante+chPot.call);
+        setCHButtons(['none']); document.getElementById('chStatus').textContent='Dealing...';
+        chDeck=shuffle(createDeck()); chPlayer=[chDeck.pop(),chDeck.pop()]; chDealer=[chDeck.pop(),chDeck.pop()]; chCommunity=[];
+        document.getElementById('chPlayerCards').innerHTML=''; document.getElementById('chDealerCards').innerHTML=''; document.getElementById('chCommunity').innerHTML='';
+        await chAnimCard(document.getElementById('chPlayerCards'),chPlayer[0]); await delay(100);
+        await chAnimCard(document.getElementById('chDealerCards'),chDealer[0],true); await delay(100);
+        await chAnimCard(document.getElementById('chPlayerCards'),chPlayer[1]); await delay(100);
+        await chAnimCard(document.getElementById('chDealerCards'),chDealer[1],true); await delay(200);
+        // Deal flop
+        chCommunity.push(chDeck.pop(),chDeck.pop(),chDeck.pop());
+        for (const c of chCommunity) await chAnimCard(document.getElementById('chCommunity'),c); await delay(200);
+        // Deal turn & river
+        chCommunity.push(chDeck.pop()); await chAnimCard(document.getElementById('chCommunity'),chCommunity[3]); await delay(200);
+        chCommunity.push(chDeck.pop()); await chAnimCard(document.getElementById('chCommunity'),chCommunity[4]);
+        chState='decision';
+        document.getElementById('chStatus').textContent = 'Call 1x or Fold?';
+        setCHButtons(['call','fold']);
+    }
+    async function chAnimCard(container,card,faceDown=false) {
+        const el=document.createElement('div');
+        el.className='poker-card'+(faceDown?' face-down':'');
+        if (!faceDown) { const isRed=card.suit==='♥'||card.suit==='♦'; el.classList.add(isRed?'red':'black'); el.innerHTML=`<div class="card-rank">${card.rank}</div><div class="card-suit">${card.suit}</div>`; }
+        else el.innerHTML='<div class="card-back"></div>';
+        el.style.opacity='0'; el.style.transform='translateY(-40px) rotateY(90deg)';
+        container.appendChild(el); await delay(50);
+        el.style.transition='all 0.35s cubic-bezier(0.34,1.56,0.64,1)';
+        el.style.opacity='1'; el.style.transform='translateY(0) rotateY(0)';
+        await delay(350);
+    }
+    async function chAction(action) {
+        if (action==='fold') {
+            setCHButtons(['none']); document.getElementById('chStatus').textContent='Folded. Lost ante.';
+            await delay(800); await chRevealDealer(); chEnd('dealer');
+        } else if (action==='call') {
+            setCHButtons(['none']); document.getElementById('chStatus').textContent='Calling...';
+            await delay(600); await chRevealDealer(); await delay(400);
+            const pb = best5From7([...chPlayer,...chCommunity]);
+            const db = best5From7([...chDealer,...chCommunity]);
+            const cmp = cmpHand(pb,db);
+            document.getElementById('chStatus').textContent=`You: ${pb.name} vs Dealer: ${db.name}`; await delay(1000);
+            if (cmp>0) chEnd('player',pb,db); else if (cmp<0) chEnd('dealer',pb,db); else chEnd('push',pb,db);
+        }
+    }
+    async function chRevealDealer() {
+        document.getElementById('chDealerCards').querySelectorAll('.poker-card.face-down').forEach((el,i)=>{
+            const c=chDealer[i]; const isRed=c.suit==='♥'||c.suit==='♦';
+            el.classList.remove('face-down'); el.classList.toggle('red',isRed);
+            el.innerHTML=`<div class="card-rank">${c.rank}</div><div class="card-suit">${c.suit}</div>`;
+        });
+    }
+    async function chEnd(winner,ph,dh) {
+        const curr = localStorage.getItem('selectedCurrency')||'BTC'; let win=0, msg='';
+        if (winner==='player') {
+            const dq = dh.rank>=2 && dh.tb[0]>=4; // pair of 4s+
+            if (dq) { win = chPot.ante*2 + chPot.call*2; msg=`Win! ${ph.name} beats ${dh.name}. Won ${formatCrypto(win)}!`; }
+            else { win = chPot.call*2; msg=`Dealer doesn't qualify! Won ${formatCrypto(win)}!`; }
+            if (win>0) { await apiCredit(win); if(window.loadBalances)window.loadBalances(); showToast(msg,'success'); }
+        } else if (winner==='push') {
+            win = chPot.ante+chPot.call; await apiCredit(win); if(window.loadBalances)window.loadBalances();
+            msg='Push! Bets returned.'; showToast(msg,'info');
+        } else { msg=`Dealer wins with ${dh.name}.`; showToast(msg,'info'); }
+        document.getElementById('chStatus').textContent=msg; updateBalEl('chBalance');
+        setCHButtons(['deal','clear']); chState='idle';
+    }
+    function setCHButtons(active) {
+        const map={deal:document.getElementById('chDeal'),call:document.getElementById('chCall'),fold:document.getElementById('chFold'),clear:document.getElementById('chClear')};
+        for (const [k,btn] of Object.entries(map)) { if(!btn)continue; btn.disabled=!active.includes(k); btn.style.opacity=active.includes(k)?'1':'0.35'; btn.style.pointerEvents=active.includes(k)?'auto':'none'; }
+    }
+
+    // ═══════════════════════════════════════════════
+    // INIT
+    // ═══════════════════════════════════════════════
+    const observer = new MutationObserver((mutations)=>{
+        mutations.forEach(m=>{
+            if (m.target.dataset?.view==='poker' && m.target.classList?.contains('active')) {
+                // Hub is default
             }
         });
     });
-    document.querySelectorAll('.view[data-view="poker"]').forEach(v => observer.observe(v, { attributes: true, attributeFilter: ['class'] }));
-
-    if (document.readyState === 'loading') {
-        document.addEventListener('DOMContentLoaded', () => {
-            if (document.querySelector('.view[data-view="poker"].active')) {
-                initPoker(); window._pokerInit = true;
-            }
-        });
-    }
+    document.querySelectorAll('.view[data-view="poker"]').forEach(v=>observer.observe(v,{attributes:true,attributeFilter:['class']}));
 })();

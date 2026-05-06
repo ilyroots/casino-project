@@ -1045,78 +1045,241 @@
                 </div>
 
                 <!-- POKER VIEW -->
-                <!-- POKER GAME VIEW -->
+                <!-- POKER HUB VIEW -->
                 <div class="view" data-view="poker">
-                    <div class="poker-game">
-                        <div class="poker-header">
-                            <div class="poker-title">
-                                <span class="pt-icon">♠</span>
-                                <div>
-                                    <h2>Ultimate Texas Hold'em</h2>
-                                    <span class="pt-sub">Heads-Up vs Dealer • Blind Pay Table • RTP 97.8%</span>
+                    <!-- Hub: game selection -->
+                    <div class="poker-hub" id="pokerHub">
+                        <div class="view-hero small">
+                            <div class="view-hero-icon">♦️</div>
+                            <h1 class="view-hero-title">Poker</h1>
+                            <p class="view-hero-desc">Pick your game. Beat the dealer or test your luck against the machine.</p>
+                        </div>
+                        <div class="content-scroll-inner">
+                            <div class="poker-hub-grid">
+                                <div class="poker-hub-card" data-poker="videopoker">
+                                    <div class="phc-icon">🎰</div>
+                                    <h3>Video Poker</h3>
+                                    <p>Jacks or Better. Draw poker against the machine. RTP 99.5%</p>
+                                    <span class="phc-play">Play →</span>
+                                </div>
+                                <div class="poker-hub-card" data-poker="threecard">
+                                    <div class="phc-icon">🃏</div>
+                                    <h3>Three Card Poker</h3>
+                                    <p>Fast action. Player vs Dealer with Pair Plus bonus. RTP 96.6%</p>
+                                    <span class="phc-play">Play →</span>
+                                </div>
+                                <div class="poker-hub-card" data-poker="ultimate">
+                                    <div class="phc-icon">♠️</div>
+                                    <h3>Ultimate Texas Hold'em</h3>
+                                    <p>Heads-Up vs Dealer with Blind pay table. RTP 97.8%</p>
+                                    <span class="phc-play">Play →</span>
+                                </div>
+                                <div class="poker-hub-card" data-poker="casino">
+                                    <div class="phc-icon">🏛️</div>
+                                    <h3>Casino Hold'em</h3>
+                                    <p>Dealer needs pair of 4s to qualify. Ante + Call bets. RTP 97.8%</p>
+                                    <span class="phc-play">Play →</span>
+                                </div>
+                                <div class="poker-hub-card" data-poker="omaha">
+                                    <div class="phc-icon">🎯</div>
+                                    <h3>Omaha Poker</h3>
+                                    <p>Four hole cards. Must use exactly two. Coming soon.</p>
+                                    <span class="phc-soon">Soon</span>
+                                </div>
+                                <div class="poker-hub-card" data-poker="caribbean">
+                                    <div class="phc-icon">🏝️</div>
+                                    <h3>Caribbean Stud</h3>
+                                    <p>Five card stud vs the dealer. Progressive jackpot. Coming soon.</p>
+                                    <span class="phc-soon">Soon</span>
+                                </div>
+                                <div class="poker-hub-card" data-poker="paigow">
+                                    <div class="phc-icon">🀄</div>
+                                    <h3>Pai Gow Poker</h3>
+                                    <p>Seven cards split into two hands. Fortune bonus. Coming soon.</p>
+                                    <span class="phc-soon">Soon</span>
+                                </div>
+                                <div class="poker-hub-card" data-poker="texas">
+                                    <div class="phc-icon">🤠</div>
+                                    <h3>Texas Hold'em</h3>
+                                    <p>Multiplayer ring games & tournaments. Coming soon.</p>
+                                    <span class="phc-soon">Soon</span>
                                 </div>
                             </div>
-                            <div class="poker-balance">
-                                <span class="pb-label">Balance</span>
-                                <span class="pb-value" id="pokerBalance">--</span>
+                        </div>
+                    </div>
+
+                    <!-- Video Poker Screen -->
+                    <div class="poker-screen" id="pokerScreen-videopoker" style="display:none">
+                        <div class="ps-header">
+                            <button class="ps-back" id="vpBack">← Back</button>
+                            <h2>Video Poker — Jacks or Better</h2>
+                            <div class="ps-balance"><span>Balance</span><strong id="vpBalance">--</strong></div>
+                        </div>
+                        <div class="vp-machine">
+                            <div class="vp-paytable" id="vpPaytable"></div>
+                            <div class="vp-cards" id="vpCards"></div>
+                            <div class="vp-hand-result" id="vpResult"></div>
+                        </div>
+                        <div class="vp-controls">
+                            <div class="vp-bet-row">
+                                <button class="vp-coin" data-coins="1">1 Coin</button>
+                                <button class="vp-coin active" data-coins="2">2 Coins</button>
+                                <button class="vp-coin" data-coins="3">3 Coins</button>
+                                <button class="vp-coin" data-coins="4">4 Coins</button>
+                                <button class="vp-coin" data-coins="5">5 Coins</button>
+                            </div>
+                            <div class="vp-actions">
+                                <button class="btn btn-vp-deal" id="vpDeal">Deal</button>
+                                <button class="btn btn-vp-draw" id="vpDraw" style="display:none">Draw</button>
                             </div>
                         </div>
+                        <div class="vp-history" id="vpHistory"></div>
+                    </div>
 
-                        <div class="poker-table" id="pokerTable">
-                            <!-- Felt background pattern via CSS -->
+                    <!-- Three Card Poker Screen -->
+                    <div class="poker-screen" id="pokerScreen-threecard" style="display:none">
+                        <div class="ps-header">
+                            <button class="ps-back" id="tcpBack">← Back</button>
+                            <h2>Three Card Poker</h2>
+                            <div class="ps-balance"><span>Balance</span><strong id="tcpBalance">--</strong></div>
+                        </div>
+                        <div class="tcp-table" id="tcpTable">
+                            <div class="tcp-felt"></div>
+                            <div class="tcp-area tcp-dealer">
+                                <div class="tcp-label">Dealer</div>
+                                <div class="tcp-cards" id="tcpDealerCards"></div>
+                            </div>
+                            <div class="tcp-area tcp-player">
+                                <div class="tcp-cards" id="tcpPlayerCards"></div>
+                                <div class="tcp-label">You</div>
+                            </div>
+                        </div>
+                        <div class="tcp-status" id="tcpStatus">Place Ante bet and click Deal</div>
+                        <div class="tcp-controls">
+                            <div class="tcp-bet-section">
+                                <div class="tcp-bet-box">
+                                    <label>Ante</label>
+                                    <span id="tcpAnteVal">0.50</span>
+                                </div>
+                                <div class="tcp-bet-box">
+                                    <label>Pair Plus</label>
+                                    <span id="tcpPairVal">0.00</span>
+                                </div>
+                            </div>
+                            <div class="tcp-chip-row">
+                                <button class="tcp-chip" data-val="0.10">0.10</button>
+                                <button class="tcp-chip active" data-val="0.50">0.50</button>
+                                <button class="tcp-chip" data-val="1.00">1.00</button>
+                                <button class="tcp-chip" data-val="5.00">5.00</button>
+                            </div>
+                            <div class="tcp-actions">
+                                <button class="btn btn-tcp-deal" id="tcpDeal">Deal</button>
+                                <button class="btn btn-tcp-play" id="tcpPlay">Play 1x</button>
+                                <button class="btn btn-tcp-fold" id="tcpFold">Fold</button>
+                                <button class="btn btn-tcp-clear" id="tcpClear">Clear</button>
+                            </div>
+                        </div>
+                        <div class="tcp-history" id="tcpHistory"></div>
+                    </div>
+
+                    <!-- Ultimate Texas Hold'em Screen -->
+                    <div class="poker-screen" id="pokerScreen-ultimate" style="display:none">
+                        <div class="ps-header">
+                            <button class="ps-back" id="uthBack">← Back</button>
+                            <h2>Ultimate Texas Hold'em</h2>
+                            <div class="ps-balance"><span>Balance</span><strong id="uthBalance">--</strong></div>
+                        </div>
+                        <div class="poker-table" id="uthTable">
                             <div class="poker-felt"></div>
-
-                            <!-- Dealer area -->
                             <div class="poker-dealer-area">
                                 <div class="poker-avatar dealer-avatar">D</div>
                                 <div class="poker-hand-label">Dealer</div>
-                                <div class="poker-cards" id="pokerDealerCards"></div>
+                                <div class="poker-cards" id="uthDealerCards"></div>
                             </div>
-
-                            <!-- Community cards -->
                             <div class="poker-community-area">
-                                <div class="poker-cards community" id="pokerCommunity"></div>
+                                <div class="poker-cards community" id="uthCommunity"></div>
                             </div>
-
-                            <!-- Pot -->
                             <div class="poker-pot-area">
                                 <div class="poker-pot-label">Pot</div>
-                                <div class="poker-pot-value" id="pokerPot">0.00</div>
+                                <div class="poker-pot-value" id="uthPot">0.00</div>
                             </div>
-
-                            <!-- Player area -->
                             <div class="poker-player-area">
-                                <div class="poker-cards" id="pokerPlayerCards"></div>
+                                <div class="poker-cards" id="uthPlayerCards"></div>
                                 <div class="poker-hand-label">You</div>
                                 <div class="poker-avatar player-avatar">Y</div>
                             </div>
                         </div>
-
-                        <div class="poker-status" id="pokerStatus">Place your bet and click Deal</div>
-
+                        <div class="poker-status" id="uthStatus">Place your bet and click Deal</div>
                         <div class="poker-controls">
                             <div class="poker-chip-selector">
-                                <button class="poker-chip chip-1" data-val="0.01">0.01</button>
-                                <button class="poker-chip chip-5" data-val="0.05">0.05</button>
-                                <button class="poker-chip chip-10" data-val="0.10">0.10</button>
-                                <button class="poker-chip chip-50 active" data-val="0.50">0.50</button>
-                                <button class="poker-chip chip-100" data-val="1.00">1.00</button>
-                                <button class="poker-chip chip-500" data-val="5.00">5.00</button>
+                                <button class="uth-chip chip-1" data-val="0.01">0.01</button>
+                                <button class="uth-chip chip-5" data-val="0.05">0.05</button>
+                                <button class="uth-chip chip-10" data-val="0.10">0.10</button>
+                                <button class="uth-chip chip-50 active" data-val="0.50">0.50</button>
+                                <button class="uth-chip chip-100" data-val="1.00">1.00</button>
+                                <button class="uth-chip chip-500" data-val="5.00">5.00</button>
                             </div>
                             <div class="poker-action-buttons">
-                                <button class="btn btn-poker-clear" id="pokerClear">Clear</button>
-                                <button class="btn btn-poker-deal" id="pokerDeal">
-                                    <span class="btn-shimmer"></span>Deal
-                                </button>
-                                <button class="btn btn-poker-check" id="pokerCheck">Check</button>
-                                <button class="btn btn-poker-bet" id="pokerBet">Bet</button>
-                                <button class="btn btn-poker-fold" id="pokerFold">Fold</button>
+                                <button class="btn btn-poker-clear" id="uthClear">Clear</button>
+                                <button class="btn btn-poker-deal" id="uthDeal"><span class="btn-shimmer"></span>Deal</button>
+                                <button class="btn btn-poker-check" id="uthCheck">Check</button>
+                                <button class="btn btn-poker-bet" id="uthBet">Bet</button>
+                                <button class="btn btn-poker-fold" id="uthFold">Fold</button>
                             </div>
                         </div>
-
                         <div class="poker-history-panel">
                             <span class="ph-title">Hand History</span>
-                            <div class="ph-list" id="pokerHistory"></div>
+                            <div class="ph-list" id="uthHistory"></div>
+                        </div>
+                    </div>
+
+                    <!-- Casino Hold'em Screen -->
+                    <div class="poker-screen" id="pokerScreen-casino" style="display:none">
+                        <div class="ps-header">
+                            <button class="ps-back" id="chBack">← Back</button>
+                            <h2>Casino Hold'em</h2>
+                            <div class="ps-balance"><span>Balance</span><strong id="chBalance">--</strong></div>
+                        </div>
+                        <div class="poker-table" id="chTable">
+                            <div class="poker-felt"></div>
+                            <div class="poker-dealer-area">
+                                <div class="poker-avatar dealer-avatar">D</div>
+                                <div class="poker-hand-label">Dealer</div>
+                                <div class="poker-cards" id="chDealerCards"></div>
+                            </div>
+                            <div class="poker-community-area">
+                                <div class="poker-cards community" id="chCommunity"></div>
+                            </div>
+                            <div class="poker-pot-area">
+                                <div class="poker-pot-label">Pot</div>
+                                <div class="poker-pot-value" id="chPot">0.00</div>
+                            </div>
+                            <div class="poker-player-area">
+                                <div class="poker-cards" id="chPlayerCards"></div>
+                                <div class="poker-hand-label">You</div>
+                                <div class="poker-avatar player-avatar">Y</div>
+                            </div>
+                        </div>
+                        <div class="poker-status" id="chStatus">Place Ante + Call bets, then click Deal</div>
+                        <div class="poker-controls">
+                            <div class="poker-chip-selector">
+                                <button class="ch-chip chip-1" data-val="0.01">0.01</button>
+                                <button class="ch-chip chip-5" data-val="0.05">0.05</button>
+                                <button class="ch-chip chip-10" data-val="0.10">0.10</button>
+                                <button class="ch-chip chip-50 active" data-val="0.50">0.50</button>
+                                <button class="ch-chip chip-100" data-val="1.00">1.00</button>
+                                <button class="ch-chip chip-500" data-val="5.00">5.00</button>
+                            </div>
+                            <div class="poker-action-buttons">
+                                <button class="btn btn-poker-clear" id="chClear">Clear</button>
+                                <button class="btn btn-poker-deal" id="chDeal"><span class="btn-shimmer"></span>Deal</button>
+                                <button class="btn btn-poker-check" id="chCall">Call 1x</button>
+                                <button class="btn btn-poker-fold" id="chFold">Fold</button>
+                            </div>
+                        </div>
+                        <div class="poker-history-panel">
+                            <span class="ph-title">Hand History</span>
+                            <div class="ph-list" id="chHistory"></div>
                         </div>
                     </div>
                 </div>
