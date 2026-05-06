@@ -1,0 +1,1024 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>STAKE.US — The Leading Social Casino</title>
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Tektur:wght@400;500;600;700;800;900&family=Hanken+Grotesk:wght@300;400;500;600;700;800&family=Azeret+Mono:wght@400;500;600;700&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="css/style.css">
+</head>
+<body>
+    <!-- Atmospheric overlays -->
+    <div class="scanlines"></div>
+    <div class="vignette"></div>
+    <div class="noise-overlay"></div>
+    <div class="cursor-glow" id="cursorGlow"></div>
+
+    <!-- Loading Screen -->
+    <div class="loader" id="loader">
+        <div class="loader-grid">
+            <div class="loader-cell"></div><div class="loader-cell"></div><div class="loader-cell"></div>
+            <div class="loader-cell"></div><div class="loader-cell"></div><div class="loader-cell"></div>
+            <div class="loader-cell"></div><div class="loader-cell"></div><div class="loader-cell"></div>
+        </div>
+        <div class="loader-text">INITIALIZING</div>
+    </div>
+
+    <!-- Mobile Bottom Nav -->
+    <nav class="mobile-nav">
+        <button class="mobile-nav-btn active" data-tab="casino">
+            <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="3" y="3" width="7" height="7" rx="1.5"/><rect x="14" y="3" width="7" height="7" rx="1.5"/><rect x="3" y="14" width="7" height="7" rx="1.5"/><rect x="14" y="14" width="7" height="7" rx="1.5"/></svg>
+            <span>Casino</span>
+        </button>
+        <button class="mobile-nav-btn" data-tab="browse">
+            <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><line x1="4" y1="6" x2="20" y2="6" stroke-linecap="round"/><line x1="4" y1="12" x2="20" y2="12" stroke-linecap="round"/><line x1="4" y1="18" x2="20" y2="18" stroke-linecap="round"/></svg>
+            <span>Browse</span>
+        </button>
+        <button class="mobile-nav-btn" data-tab="games">
+            <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polygon points="6 3 20 12 6 21 6 3" stroke-linecap="round" stroke-linejoin="round"/></svg>
+            <span>Games</span>
+        </button>
+        <button class="mobile-nav-btn" data-tab="chat">
+            <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M21 11.5a8.38 8.38 0 0 1-.9 3.8 8.5 8.5 0 0 1-7.6 4.7 8.38 8.38 0 0 1-3.8-.9L3 21l1.9-5.7a8.38 8.38 0 0 1-.9-3.8 8.5 8.5 0 0 1 4.7-7.6 8.38 8.38 0 0 1 3.8-.9h.5a8.48 8.48 0 0 1 8 8v.5z" stroke-linecap="round" stroke-linejoin="round"/></svg>
+            <span>Chat</span>
+        </button>
+    </nav>
+
+    <div class="app-container">
+        <!-- Left Sidebar -->
+        <aside class="sidebar-left" id="sidebarLeft">
+            <div class="sidebar-logo">
+                <div class="logo-mark">
+                    <svg width="32" height="32" viewBox="0 0 40 40" fill="none">
+                        <path d="M20 2L4 11v18l16 9 16-9V11L20 2z" stroke="#39ff14" stroke-width="1.5" fill="none"/>
+                        <path d="M20 10l-8 4.5v9L20 28l8-4.5v-9L20 10z" fill="#39ff14" opacity="0.15"/>
+                        <circle cx="20" cy="20" r="4" fill="#39ff14"/>
+                        <circle cx="20" cy="20" r="1.5" fill="#050508"/>
+                    </svg>
+                </div>
+                <span class="logo-text">STAKE</span>
+                <button class="sidebar-toggle" id="sidebarToggle" aria-label="Toggle sidebar">
+                    <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><line x1="4" y1="6" x2="20" y2="6" stroke-linecap="round"/><line x1="4" y1="12" x2="20" y2="12" stroke-linecap="round"/><line x1="4" y1="18" x2="20" y2="18" stroke-linecap="round"/></svg>
+                </button>
+            </div>
+
+            <div class="sidebar-divider"></div>
+
+            <div class="sidebar-mode">
+                <button class="mode-btn active" data-mode="casino">
+                    <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="3" y="3" width="7" height="7" rx="1.5"/><rect x="14" y="3" width="7" height="7" rx="1.5"/><rect x="3" y="14" width="7" height="7" rx="1.5"/><rect x="14" y="14" width="7" height="7" rx="1.5"/></svg>
+                    <span>Casino</span>
+                </button>
+                <button class="mode-btn" data-mode="poker">
+                    <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="10"/><path d="M12 6v6l4 2"/></svg>
+                    <span>Poker</span>
+                </button>
+            </div>
+
+            <div class="sidebar-divider"></div>
+
+            <nav class="sidebar-nav">
+                <div class="nav-section">
+                    <a href="#challenges" class="nav-link" data-view="challenges">
+                        <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M13 2L3 14h9l-1 8 10-12h-9l1-8z" stroke-linecap="round" stroke-linejoin="round"/></svg>
+                        <span>Challenges</span>
+                    </a>
+                    <a href="#gameplay" class="nav-link" data-view="gameplay">
+                        <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="10"/><polyline points="12 6 12 12 16 14" stroke-linecap="round" stroke-linejoin="round"/></svg>
+                        <span>My Game Play</span>
+                    </a>
+                </div>
+
+                <div class="nav-section">
+                    <div class="nav-section-title">GAMES</div>
+                    <a href="#trending" class="nav-link active" data-view="trending">
+                        <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polygon points="13 2 3 14 12 14 11 22 21 10 12 10 13 2" stroke-linecap="round" stroke-linejoin="round"/></svg>
+                        <span>Trending</span>
+                    </a>
+                    <a href="#originals" class="nav-link" data-view="originals">
+                        <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M12 2l3.09 6.26L22 9.27l-5 4.87 1.18 6.88L12 17.77l-6.18 3.25L7 14.14 2 9.27l6.91-1.01L12 2z" stroke-linecap="round" stroke-linejoin="round"/></svg>
+                        <span>Stake Originals</span>
+                    </a>
+                    <a href="#new-releases" class="nav-link" data-view="new-releases">
+                        <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="10"/><path d="M8 12h8" stroke-linecap="round"/><path d="M12 8v8" stroke-linecap="round"/></svg>
+                        <span>New Releases</span>
+                    </a>
+                    <a href="#feature-buy" class="nav-link" data-view="feature-buy">
+                        <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M12 2v4M12 18v4M4.93 4.93l2.83 2.83M16.24 16.24l2.83 2.83M2 12h4M18 12h4M4.93 19.07l2.83-2.83M16.24 7.76l2.83-2.83" stroke-linecap="round"/></svg>
+                        <span>Feature Buy-In</span>
+                    </a>
+                    <a href="#slots" class="nav-link" data-view="slots">
+                        <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="2" y="3" width="20" height="14" rx="2" stroke-linecap="round" stroke-linejoin="round"/><line x1="8" y1="21" x2="16" y2="21" stroke-linecap="round"/><line x1="12" y1="17" x2="12" y2="21" stroke-linecap="round"/></svg>
+                        <span>Slots</span>
+                    </a>
+                    <a href="#live-casino" class="nav-link" data-view="live-casino">
+                        <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M17 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2" stroke-linecap="round" stroke-linejoin="round"/><circle cx="9" cy="7" r="4"/><path d="M23 21v-2a4 4 0 0 0-3-3.87" stroke-linecap="round" stroke-linejoin="round"/><path d="M16 3.13a4 4 0 0 1 0 7.75" stroke-linecap="round" stroke-linejoin="round"/></svg>
+                        <span>Live Casino</span>
+                    </a>
+                    <a href="#table-games" class="nav-link" data-view="table-games">
+                        <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="3" y="3" width="18" height="18" rx="2" stroke-linecap="round" stroke-linejoin="round"/><path d="M9 3v18" stroke-linecap="round"/><path d="M15 3v18" stroke-linecap="round"/></svg>
+                        <span>Table Games</span>
+                    </a>
+                    <a href="#game-shows" class="nav-link" data-view="game-shows">
+                        <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="10"/><path d="M8 14s1.5 2 4 2 4-2 4-2" stroke-linecap="round"/><line x1="9" y1="9" x2="9.01" y2="9" stroke-linecap="round" stroke-width="3"/><line x1="15" y1="9" x2="15.01" y2="9" stroke-linecap="round" stroke-width="3"/></svg>
+                        <span>Game Shows</span>
+                    </a>
+                    <a href="#blackjack" class="nav-link" data-view="blackjack">
+                        <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z" stroke-linecap="round" stroke-linejoin="round"/></svg>
+                        <span>Blackjack</span>
+                    </a>
+                    <a href="#roulette" class="nav-link" data-view="roulette">
+                        <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="10"/><path d="M12 8v8" stroke-linecap="round"/><path d="M8 12h8" stroke-linecap="round"/></svg>
+                        <span>Roulette</span>
+                    </a>
+                    <a href="#baccarat" class="nav-link" data-view="baccarat">
+                        <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M6 9h12M6 15h12M6 12h12" stroke-linecap="round"/></svg>
+                        <span>Baccarat</span>
+                    </a>
+                    <a href="#video-poker" class="nav-link" data-view="video-poker">
+                        <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="2" y="7" width="20" height="10" rx="2" stroke-linecap="round" stroke-linejoin="round"/><path d="M16 7v10" stroke-linecap="round"/></svg>
+                        <span>Video Poker</span>
+                    </a>
+                    <a href="#scratch-cards" class="nav-link" data-view="scratch-cards">
+                        <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M4 4h16v16H4z" stroke-linecap="round" stroke-linejoin="round"/><path d="M9 9h6v6H9z" stroke-linecap="round" stroke-linejoin="round"/></svg>
+                        <span>Scratch Cards</span>
+                    </a>
+                    <a href="#showdowns" class="nav-link" data-view="showdowns">
+                        <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z" stroke-linecap="round" stroke-linejoin="round"/></svg>
+                        <span>Showdowns</span>
+                    </a>
+                </div>
+
+                <div class="nav-section">
+                    <div class="nav-section-title">MORE</div>
+                    <a href="#promotions" class="nav-link" data-view="promotions">
+                        <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M20.84 4.61a5.5 5.5 0 0 0-7.78 0L12 5.67l-1.06-1.06a5.5 5.5 0 0 0-7.78 7.78l1.06 1.06L12 21.23l7.78-7.78 1.06-1.06a5.5 5.5 0 0 0 0-7.78z" stroke-linecap="round" stroke-linejoin="round"/></svg>
+                        <span>Promotions</span>
+                    </a>
+                    <a href="#sponsorships" class="nav-link" data-view="sponsorships">
+                        <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M12 2L2 7l10 5 10-5-10-5z" stroke-linecap="round" stroke-linejoin="round"/><path d="M2 17l10 5 10-5" stroke-linecap="round" stroke-linejoin="round"/><path d="M2 12l10 5 10-5" stroke-linecap="round" stroke-linejoin="round"/></svg>
+                        <span>Sponsorships</span>
+                    </a>
+                    <a href="#responsible-gaming" class="nav-link" data-view="responsible-gaming">
+                        <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z" stroke-linecap="round" stroke-linejoin="round"/></svg>
+                        <span>Responsible Gaming</span>
+                    </a>
+                    <a href="#live-support" class="nav-link" data-view="live-support">
+                        <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M21 11.5a8.38 8.38 0 0 1-.9 3.8 8.5 8.5 0 0 1-7.6 4.7 8.38 8.38 0 0 1-3.8-.9L3 21l1.9-5.7a8.38 8.38 0 0 1-.9-3.8 8.5 8.5 0 0 1 4.7-7.6 8.38 8.38 0 0 1 3.8-.9h.5a8.48 8.48 0 0 1 8 8v.5z" stroke-linecap="round" stroke-linejoin="round"/></svg>
+                        <span>Live Support</span>
+                    </a>
+                    <a href="#blog" class="nav-link" data-view="blog">
+                        <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M2 3h6a4 4 0 0 1 4 4v14a3 3 0 0 0-3-3H2z" stroke-linecap="round" stroke-linejoin="round"/><path d="M22 3h-6a4 4 0 0 0-4 4v14a3 3 0 0 1 3-3h7z" stroke-linecap="round" stroke-linejoin="round"/></svg>
+                        <span>Blog</span>
+                    </a>
+                </div>
+            </nav>
+        </aside>
+
+        <!-- Main Content -->
+        <main class="main-content">
+            <!-- Top Header -->
+            <header class="top-header">
+                <div class="header-left">
+                    <button class="mobile-menu-btn" id="mobileMenuBtn" aria-label="Menu">
+                        <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><line x1="4" y1="6" x2="20" y2="6" stroke-linecap="round"/><line x1="4" y1="12" x2="20" y2="12" stroke-linecap="round"/><line x1="4" y1="18" x2="20" y2="18" stroke-linecap="round"/></svg>
+                    </button>
+                    <div class="search-bar">
+                        <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><circle cx="11" cy="11" r="8"/><path d="M21 21l-4.35-4.35" stroke-linecap="round"/></svg>
+                        <input type="text" placeholder="Search games...">
+                    </div>
+                </div>
+                <div class="header-right">
+                    <div class="balance-display">
+                        <div class="balance-item">
+                            <div class="balance-dot gc"></div>
+                            <div class="balance-info">
+                                <span class="balance-label">Gold Coins</span>
+                                <span class="balance-value" id="gcBalance">560,000</span>
+                            </div>
+                        </div>
+                        <div class="balance-divider"></div>
+                        <div class="balance-item">
+                            <div class="balance-dot sc"></div>
+                            <div class="balance-info">
+                                <span class="balance-label">Stake Cash</span>
+                                <span class="balance-value sc" id="scBalance">56.00</span>
+                            </div>
+                        </div>
+                    </div>
+                    <div class="header-actions" id="headerActions">
+                        <button class="btn btn-login" id="loginBtn">Log In</button>
+                        <button class="btn btn-register" id="signupBtn">
+                            <span class="btn-glow"></span>
+                            Sign Up
+                        </button>
+                        <button class="btn btn-wallet" id="walletBtn" aria-label="Wallet">
+                            <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M20 12V8H6a2 2 0 0 1-2-2c0-1.1.9-2 2-2h12v4" stroke-linecap="round" stroke-linejoin="round"/><path d="M4 6v12a2 2 0 0 0 2 2h14v-4" stroke-linecap="round" stroke-linejoin="round"/><path d="M18 12a2 2 0 0 0-2 2c0 1.1.9 2 2 2h4v-4h-4z" stroke-linecap="round" stroke-linejoin="round"/></svg>
+                        </button>
+                    </div>
+                    <div class="header-actions hidden" id="userActions">
+                        <button class="btn btn-wallet" id="walletBtnLogged" aria-label="Wallet">
+                            <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M20 12V8H6a2 2 0 0 1-2-2c0-1.1.9-2 2-2h12v4" stroke-linecap="round" stroke-linejoin="round"/><path d="M4 6v12a2 2 0 0 0 2 2h14v-4" stroke-linecap="round" stroke-linejoin="round"/><path d="M18 12a2 2 0 0 0-2 2c0 1.1.9 2 2 2h4v-4h-4z" stroke-linecap="round" stroke-linejoin="round"/></svg>
+                        </button>
+                        <div class="user-menu" id="userMenu">
+                            <button class="user-avatar" id="userAvatar">
+                                <span class="avatar-letter">G</span>
+                                <span class="avatar-chevron">
+                                    <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3"><polyline points="6 9 12 15 18 9" stroke-linecap="round" stroke-linejoin="round"/></svg>
+                                </span>
+                            </button>
+                            <div class="user-dropdown" id="userDropdown">
+                                <div class="dropdown-header">
+                                    <div class="dropdown-avatar"><span id="dropdownLetter">G</span></div>
+                                    <div class="dropdown-info">
+                                        <div class="dropdown-name" id="dropdownName">Guest</div>
+                                        <div class="dropdown-level">Bronze VIP</div>
+                                    </div>
+                                </div>
+                                <div class="dropdown-divider"></div>
+                                <a href="#profile" class="dropdown-link" data-nav="profile">
+                                    <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2" stroke-linecap="round" stroke-linejoin="round"/><circle cx="12" cy="7" r="4" stroke-linecap="round" stroke-linejoin="round"/></svg>
+                                    Profile
+                                </a>
+                                <a href="#wallet" class="dropdown-link" data-nav="wallet">
+                                    <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M20 12V8H6a2 2 0 0 1-2-2c0-1.1.9-2 2-2h12v4" stroke-linecap="round" stroke-linejoin="round"/><path d="M4 6v12a2 2 0 0 0 2 2h14v-4" stroke-linecap="round" stroke-linejoin="round"/><path d="M18 12a2 2 0 0 0-2 2c0 1.1.9 2 2 2h4v-4h-4z" stroke-linecap="round" stroke-linejoin="round"/></svg>
+                                    Wallet
+                                </a>
+                                <a href="#gameplay" class="dropdown-link" data-nav="gameplay">
+                                    <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="10" stroke-linecap="round" stroke-linejoin="round"/><polyline points="12 6 12 12 16 14" stroke-linecap="round" stroke-linejoin="round"/></svg>
+                                    Game History
+                                </a>
+                                <a href="#challenges" class="dropdown-link" data-nav="challenges">
+                                    <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M13 2L3 14h9l-1 8 10-12h-9l1-8z" stroke-linecap="round" stroke-linejoin="round"/></svg>
+                                    Challenges
+                                </a>
+                                <a href="#promotions" class="dropdown-link" data-nav="promotions">
+                                    <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M20.84 4.61a5.5 5.5 0 0 0-7.78 0L12 5.67l-1.06-1.06a5.5 5.5 0 0 0-7.78 7.78l1.06 1.06L12 21.23l7.78-7.78 1.06-1.06a5.5 5.5 0 0 0 0-7.78z" stroke-linecap="round" stroke-linejoin="round"/></svg>
+                                    Promotions
+                                </a>
+                                <div class="dropdown-divider"></div>
+                                <button class="dropdown-link logout" id="logoutBtn">
+                                    <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M9 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h4" stroke-linecap="round" stroke-linejoin="round"/><polyline points="16 17 21 12 16 7" stroke-linecap="round" stroke-linejoin="round"/><line x1="21" y1="12" x2="9" y2="12" stroke-linecap="round" stroke-linejoin="round"/></svg>
+                                    Log Out
+                                </button>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </header>
+
+            <!-- Views Container -->
+            <div class="views-container" id="viewsContainer">
+                <!-- HOME VIEW -->
+                <div class="view active" data-view="home">
+                    <section class="hero-section">
+                        <div class="hero-grid-bg">
+                            <div class="grid-line horizontal" style="top:20%"></div>
+                            <div class="grid-line horizontal" style="top:40%"></div>
+                            <div class="grid-line horizontal" style="top:60%"></div>
+                            <div class="grid-line horizontal" style="top:80%"></div>
+                            <div class="grid-line vertical" style="left:20%"></div>
+                            <div class="grid-line vertical" style="left:40%"></div>
+                            <div class="grid-line vertical" style="left:60%"></div>
+                            <div class="grid-line vertical" style="left:80%"></div>
+                        </div>
+                        <div class="hero-orb orb-1"></div>
+                        <div class="hero-orb orb-2"></div>
+                        <div class="hero-orb orb-3"></div>
+                        <div class="hero-content">
+                            <div class="hero-badge"><span class="badge-pulse"></span>WELCOME OFFER</div>
+                            <h1 class="hero-title">
+                                <span class="title-line">560,000</span>
+                                <span class="title-line accent">GC + 56 SC</span>
+                                <span class="title-line">FREE</span>
+                            </h1>
+                            <p class="hero-desc">No purchase necessary. Join America's most trusted social casino experience.</p>
+                            <div class="hero-actions">
+                                <button class="btn btn-hero-primary"><span class="btn-shimmer"></span>Create Account</button>
+                                <button class="btn btn-hero-secondary">Learn More</button>
+                            </div>
+                        </div>
+                        <div class="hero-visual">
+                            <div class="card-stack">
+                                <div class="hero-card card-back"><div class="card-pattern"></div><div class="card-suit">♠</div></div>
+                                <div class="hero-card card-mid"><div class="card-pattern"></div><div class="card-suit">♥</div></div>
+                                <div class="hero-card card-front"><div class="card-pattern"></div><div class="card-suit">♦</div><div class="card-glow"></div></div>
+                            </div>
+                            <div class="floating-chips">
+                                <div class="chip chip-1"></div>
+                                <div class="chip chip-2"></div>
+                                <div class="chip chip-3"></div>
+                            </div>
+                        </div>
+                        <div class="hero-diagonal"></div>
+                    </section>
+
+                    <section class="promos-ticker">
+                        <div class="ticker-track">
+                            <div class="ticker-content">
+                                <span class="ticker-item"><span class="ticker-dot"></span> Daily Races — $50,000 Prize Pool</span>
+                                <span class="ticker-sep">◆</span>
+                                <span class="ticker-item"><span class="ticker-dot hot"></span> Weekly Raffle — 10M GC Giveaway</span>
+                                <span class="ticker-sep">◆</span>
+                                <span class="ticker-item"><span class="ticker-dot"></span> Multiplier Drops — Win up to 5,000x</span>
+                                <span class="ticker-sep">◆</span>
+                                <span class="ticker-item"><span class="ticker-dot hot"></span> Originals Challenge — $10,000</span>
+                                <span class="ticker-sep">◆</span>
+                                <span class="ticker-item"><span class="ticker-dot"></span> VIP Club — Exclusive Rewards</span>
+                                <span class="ticker-sep">◆</span>
+                            </div>
+                            <div class="ticker-content" aria-hidden="true">
+                                <span class="ticker-item"><span class="ticker-dot"></span> Daily Races — $50,000 Prize Pool</span>
+                                <span class="ticker-sep">◆</span>
+                                <span class="ticker-item"><span class="ticker-dot hot"></span> Weekly Raffle — 10M GC Giveaway</span>
+                                <span class="ticker-sep">◆</span>
+                                <span class="ticker-item"><span class="ticker-dot"></span> Multiplier Drops — Win up to 5,000x</span>
+                                <span class="ticker-sep">◆</span>
+                                <span class="ticker-item"><span class="ticker-dot hot"></span> Originals Challenge — $10,000</span>
+                                <span class="ticker-sep">◆</span>
+                                <span class="ticker-item"><span class="ticker-dot"></span> VIP Club — Exclusive Rewards</span>
+                                <span class="ticker-sep">◆</span>
+                            </div>
+                        </div>
+                    </section>
+
+                    <div class="content-scroll-inner">
+                        <section class="game-section">
+                            <div class="section-header"><h2 class="section-title"><span class="title-icon">⚡</span>Trending Games</h2><a href="#trending" class="view-all" data-nav="trending">View All<svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3"><polyline points="9 6 15 12 9 18" stroke-linecap="round" stroke-linejoin="round"/></svg></a></div>
+                            <div class="games-grid" data-render="trending"></div>
+                        </section>
+                        <section class="game-section">
+                            <div class="section-header"><h2 class="section-title"><span class="title-icon">◈</span>Stake Originals</h2><a href="#originals" class="view-all" data-nav="originals">View All<svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3"><polyline points="9 6 15 12 9 18" stroke-linecap="round" stroke-linejoin="round"/></svg></a></div>
+                            <div class="games-grid" data-render="originals"></div>
+                        </section>
+                        <section class="game-section">
+                            <div class="section-header"><h2 class="section-title"><span class="title-icon red">●</span>Live Casino</h2><a href="#live-casino" class="view-all" data-nav="live-casino">View All<svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3"><polyline points="9 6 15 12 9 18" stroke-linecap="round" stroke-linejoin="round"/></svg></a></div>
+                            <div class="games-grid" data-render="live"></div>
+                        </section>
+                        <section class="game-section">
+                            <div class="section-header"><h2 class="section-title"><span class="title-icon">🎰</span>Popular Slots</h2><a href="#slots" class="view-all" data-nav="slots">View All<svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3"><polyline points="9 6 15 12 9 18" stroke-linecap="round" stroke-linejoin="round"/></svg></a></div>
+                            <div class="games-grid" data-render="slots"></div>
+                        </section>
+                        <section class="game-section">
+                            <div class="section-header"><h2 class="section-title"><span class="title-icon">♠</span>Table Games</h2><a href="#table-games" class="view-all" data-nav="table-games">View All<svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3"><polyline points="9 6 15 12 9 18" stroke-linecap="round" stroke-linejoin="round"/></svg></a></div>
+                            <div class="games-grid" data-render="table"></div>
+                        </section>
+
+                        <footer class="site-footer">
+                            <div class="footer-orb"></div>
+                            <div class="footer-grid">
+                                <div class="footer-col"><h4>Casino</h4><a href="#slots" data-nav="slots">Slots</a><a href="#live-casino" data-nav="live-casino">Live Casino</a><a href="#table-games" data-nav="table-games">Table Games</a><a href="#originals" data-nav="originals">Stake Originals</a><a href="#game-shows" data-nav="game-shows">Game Shows</a></div>
+                                <div class="footer-col"><h4>Promotions</h4><a href="#promotions" data-nav="promotions">Daily Races</a><a href="#promotions" data-nav="promotions">Weekly Raffle</a><a href="#promotions" data-nav="promotions">Multiplier Drops</a><a href="#challenges" data-nav="challenges">Challenges</a><a href="#promotions" data-nav="promotions">VIP Club</a></div>
+                                <div class="footer-col"><h4>Support</h4><a href="#live-support" data-nav="live-support">Help Center</a><a href="#">Fairness</a><a href="#responsible-gaming" data-nav="responsible-gaming">Responsible Gaming</a><a href="#live-support" data-nav="live-support">Live Support</a><a href="#responsible-gaming" data-nav="responsible-gaming">Self Exclusion</a></div>
+                                <div class="footer-col"><h4>About</h4><a href="#promotions" data-nav="promotions">VIP Club</a><a href="#">Affiliates</a><a href="#sponsorships" data-nav="sponsorships">Sponsorships</a><a href="#blog" data-nav="blog">Blog</a><a href="#">Careers</a></div>
+                                <div class="footer-col"><h4>Community</h4><a href="#">Forum</a><a href="#">Discord</a><a href="#">Twitter / X</a><a href="#">Instagram</a><a href="#">Telegram</a></div>
+                                <div class="footer-col"><h4>Legal</h4><a href="#">Terms of Service</a><a href="#">Privacy Policy</a><a href="#">Sweepstakes Rules</a><a href="#">AML Policy</a><a href="#">Cookie Policy</a></div>
+                            </div>
+                            <div class="footer-bottom">
+                                <div class="footer-brand"><svg width="28" height="28" viewBox="0 0 40 40" fill="none"><path d="M20 2L4 11v18l16 9 16-9V11L20 2z" stroke="#39ff14" stroke-width="1.5" fill="none"/><path d="M20 10l-8 4.5v9L20 28l8-4.5v-9L20 10z" fill="#39ff14" opacity="0.15"/><circle cx="20" cy="20" r="4" fill="#39ff14"/><circle cx="20" cy="20" r="1.5" fill="#050508"/></svg><span>STAKE.US</span></div>
+                                <p class="footer-disclaimer">Stake.us is a social casino. No purchase necessary. Void where prohibited. Must be 21+ to play. Stake Cash can be redeemed for prizes after meeting playthrough requirements.</p>
+                                <div class="footer-copyright">© 2026 Stake.us. All rights reserved.</div>
+                            </div>
+                        </footer>
+                    </div>
+                </div>
+
+                <!-- CHALLENGES VIEW -->
+                <div class="view" data-view="challenges">
+                    <div class="view-hero">
+                        <div class="view-hero-icon">⚡</div>
+                        <h1 class="view-hero-title">Challenges</h1>
+                        <p class="view-hero-desc">Complete daily and weekly challenges to earn rewards, Stake Cash, and exclusive bonuses.</p>
+                    </div>
+                    <div class="content-scroll-inner">
+                        <div class="challenges-grid" id="challengesGrid"></div>
+                    </div>
+                </div>
+
+                <!-- MY GAME PLAY VIEW -->
+                <div class="view" data-view="gameplay">
+                    <div class="view-hero small">
+                        <div class="view-hero-icon">⏱</div>
+                        <h1 class="view-hero-title">My Game Play</h1>
+                        <p class="view-hero-desc">Your complete betting history, recent sessions, and gameplay statistics.</p>
+                    </div>
+                    <div class="content-scroll-inner">
+                        <div class="gameplay-tabs">
+                            <button class="gp-tab active">All Bets</button>
+                            <button class="gp-tab">High Wins</button>
+                            <button class="gp-tab">Originals</button>
+                            <button class="gp-tab">Slots</button>
+                            <button class="gp-tab">Live Casino</button>
+                        </div>
+                        <div class="gameplay-table-wrap">
+                            <table class="gameplay-table" id="gameplayTable"></table>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- TRENDING VIEW -->
+                <div class="view" data-view="trending">
+                    <div class="view-hero small">
+                        <div class="view-hero-icon">⚡</div>
+                        <h1 class="view-hero-title">Trending Games</h1>
+                        <p class="view-hero-desc">The hottest games being played right now by the Stake.us community.</p>
+                    </div>
+                    <div class="content-scroll-inner">
+                        <div class="filter-bar">
+                            <button class="filter-chip active">All</button>
+                            <button class="filter-chip">Pragmatic Play</button>
+                            <button class="filter-chip">Hacksaw</button>
+                            <button class="filter-chip">Nolimit City</button>
+                            <button class="filter-chip">Relax Gaming</button>
+                        </div>
+                        <div class="games-grid large" data-render="trending-full"></div>
+                    </div>
+                </div>
+
+                <!-- ORIGINALS VIEW -->
+                <div class="view" data-view="originals">
+                    <div class="view-hero small">
+                        <div class="view-hero-icon">◈</div>
+                        <h1 class="view-hero-title">Stake Originals</h1>
+                        <p class="view-hero-desc">Exclusive provably fair games built by Stake. Lowest house edge, highest transparency.</p>
+                    </div>
+                    <div class="content-scroll-inner">
+                        <div class="games-grid large" data-render="originals-full"></div>
+                    </div>
+                </div>
+
+                <!-- NEW RELEASES VIEW -->
+                <div class="view" data-view="new-releases">
+                    <div class="view-hero small">
+                        <div class="view-hero-icon">✦</div>
+                        <h1 class="view-hero-title">New Releases</h1>
+                        <p class="view-hero-desc">Fresh games added this week. Be the first to try the latest slots and live dealer experiences.</p>
+                    </div>
+                    <div class="content-scroll-inner">
+                        <div class="games-grid large" data-render="new-releases"></div>
+                    </div>
+                </div>
+
+                <!-- FEATURE BUY-IN VIEW -->
+                <div class="view" data-view="feature-buy">
+                    <div class="view-hero small">
+                        <div class="view-hero-icon">🎯</div>
+                        <h1 class="view-hero-title">Feature Buy-In</h1>
+                        <p class="view-hero-desc">Skip straight to the bonus rounds. Buy features instantly and chase those max wins.</p>
+                    </div>
+                    <div class="content-scroll-inner">
+                        <div class="games-grid large" data-render="feature-buy"></div>
+                    </div>
+                </div>
+
+                <!-- SLOTS VIEW -->
+                <div class="view" data-view="slots">
+                    <div class="view-hero small">
+                        <div class="view-hero-icon">🎰</div>
+                        <h1 class="view-hero-title">Slots</h1>
+                        <p class="view-hero-desc">Over 1,000 slot games from the world's best providers. Classic, video, and jackpot slots.</p>
+                    </div>
+                    <div class="content-scroll-inner">
+                        <div class="filter-bar">
+                            <button class="filter-chip active">All</button>
+                            <button class="filter-chip">Pragmatic Play</button>
+                            <button class="filter-chip">Hacksaw</button>
+                            <button class="filter-chip">Nolimit City</button>
+                            <button class="filter-chip">Push Gaming</button>
+                            <button class="filter-chip">Play'n GO</button>
+                            <button class="filter-chip">Relax Gaming</button>
+                        </div>
+                        <div class="games-grid large" data-render="slots-full"></div>
+                    </div>
+                </div>
+
+                <!-- LIVE CASINO VIEW -->
+                <div class="view" data-view="live-casino">
+                    <div class="view-hero small">
+                        <div class="view-hero-icon red">●</div>
+                        <h1 class="view-hero-title">Live Casino</h1>
+                        <p class="view-hero-desc">Real dealers, real tables, real time. Streamed in HD from professional studios worldwide.</p>
+                    </div>
+                    <div class="content-scroll-inner">
+                        <div class="filter-bar">
+                            <button class="filter-chip active">All</button>
+                            <button class="filter-chip">Evolution</button>
+                            <button class="filter-chip">Pragmatic Live</button>
+                            <button class="filter-chip">Playtech</button>
+                        </div>
+                        <div class="games-grid large" data-render="live-full"></div>
+                    </div>
+                </div>
+
+                <!-- TABLE GAMES VIEW -->
+                <div class="view" data-view="table-games">
+                    <div class="view-hero small">
+                        <div class="view-hero-icon">♠</div>
+                        <h1 class="view-hero-title">Table Games</h1>
+                        <p class="view-hero-desc">Classic casino table games. Blackjack, roulette, baccarat, poker, and more.</p>
+                    </div>
+                    <div class="content-scroll-inner">
+                        <div class="games-grid large" data-render="table-full"></div>
+                    </div>
+                </div>
+
+                <!-- GAME SHOWS VIEW -->
+                <div class="view" data-view="game-shows">
+                    <div class="view-hero small">
+                        <div class="view-hero-icon">🎡</div>
+                        <h1 class="view-hero-title">Game Shows</h1>
+                        <p class="view-hero-desc">Interactive live game shows with massive multipliers and entertaining hosts.</p>
+                    </div>
+                    <div class="content-scroll-inner">
+                        <div class="games-grid large" data-render="game-shows"></div>
+                    </div>
+                </div>
+
+                <!-- BLACKJACK VIEW -->
+                <div class="view" data-view="blackjack">
+                    <div class="view-hero small">
+                        <div class="view-hero-icon">♣</div>
+                        <h1 class="view-hero-title">Blackjack</h1>
+                        <p class="view-hero-desc">Beat the dealer to 21. Classic, multi-hand, and VIP blackjack tables.</p>
+                    </div>
+                    <div class="content-scroll-inner">
+                        <div class="games-grid large" data-render="blackjack"></div>
+                    </div>
+                </div>
+
+                <!-- ROULETTE VIEW -->
+                <div class="view" data-view="roulette">
+                    <div class="view-hero small">
+                        <div class="view-hero-icon">🔴</div>
+                        <h1 class="view-hero-title">Roulette</h1>
+                        <p class="view-hero-desc">European, American, and Lightning Roulette. Pick your number and spin the wheel.</p>
+                    </div>
+                    <div class="content-scroll-inner">
+                        <div class="games-grid large" data-render="roulette"></div>
+                    </div>
+                </div>
+
+                <!-- BACCARAT VIEW -->
+                <div class="view" data-view="baccarat">
+                    <div class="view-hero small">
+                        <div class="view-hero-icon">💎</div>
+                        <h1 class="view-hero-title">Baccarat</h1>
+                        <p class="view-hero-desc">The classic card game of chance. Player, Banker, or Tie — place your bet.</p>
+                    </div>
+                    <div class="content-scroll-inner">
+                        <div class="games-grid large" data-render="baccarat"></div>
+                    </div>
+                </div>
+
+                <!-- VIDEO POKER VIEW -->
+                <div class="view" data-view="video-poker">
+                    <div class="view-hero small">
+                        <div class="view-hero-icon">🃏</div>
+                        <h1 class="view-hero-title">Video Poker</h1>
+                        <p class="view-hero-desc">Poker meets slots. Hold the right cards and build the best hand for big payouts.</p>
+                    </div>
+                    <div class="content-scroll-inner">
+                        <div class="games-grid large" data-render="video-poker"></div>
+                    </div>
+                </div>
+
+                <!-- SCRATCH CARDS VIEW -->
+                <div class="view" data-view="scratch-cards">
+                    <div class="view-hero small">
+                        <div class="view-hero-icon">✨</div>
+                        <h1 class="view-hero-title">Scratch Cards</h1>
+                        <p class="view-hero-desc">Instant win excitement. Reveal symbols and match for instant prizes.</p>
+                    </div>
+                    <div class="content-scroll-inner">
+                        <div class="games-grid large" data-render="scratch-cards"></div>
+                    </div>
+                </div>
+
+                <!-- SHOWDOWNS VIEW -->
+                <div class="view" data-view="showdowns">
+                    <div class="view-hero small">
+                        <div class="view-hero-icon">🏆</div>
+                        <h1 class="view-hero-title">Showdowns</h1>
+                        <p class="view-hero-desc">Compete against other players in real-time tournaments. Climb the leaderboard for massive prizes.</p>
+                    </div>
+                    <div class="content-scroll-inner">
+                        <div class="showdowns-list" id="showdownsList"></div>
+                    </div>
+                </div>
+                <!-- PROMOTIONS VIEW -->
+                <div class="view" data-view="promotions">
+                    <div class="view-hero small">
+                        <div class="view-hero-icon">🎁</div>
+                        <h1 class="view-hero-title">Promotions</h1>
+                        <p class="view-hero-desc">Daily races, weekly raffles, multiplier drops, and exclusive VIP rewards.</p>
+                    </div>
+                    <div class="content-scroll-inner">
+                        <div class="promo-cards" id="promoCards"></div>
+                        <div class="promo-details">
+                            <div class="promo-detail-card">
+                                <h3>Daily Races</h3>
+                                <p>Compete every day for a share of <span class="highlight">$50,000</span> in prizes. The more you wager, the higher you climb. Top 100 players win Stake Cash.</p>
+                                <div class="promo-meta"><span>⏱ Resets in 4h 22m</span><span>👥 12,405 participating</span></div>
+                            </div>
+                            <div class="promo-detail-card">
+                                <h3>Weekly Raffle</h3>
+                                <p>Every ticket is a chance to win. Earn tickets by playing your favorite games. <span class="highlight">10,000,000 GC</span> giveaway every Sunday.</p>
+                                <div class="promo-meta"><span>🎟 Your tickets: 24</span><span>🏆 Prize pool: 10M GC</span></div>
+                            </div>
+                            <div class="promo-detail-card">
+                                <h3>Multiplier Drops</h3>
+                                <p>Hit a <span class="highlight">100x+</span> multiplier on selected games and win bonus Stake Cash. Random drops throughout the day.</p>
+                                <div class="promo-meta"><span>⚡ Max multiplier: 5,000x</span><span>💰 Drop pool: $25,000</span></div>
+                            </div>
+                            <div class="promo-detail-card vip">
+                                <h3>VIP Club</h3>
+                                <p>Exclusive rewards for loyal players. Level up for rakeback, weekly bonuses, dedicated host, and luxury gifts.</p>
+                                <div class="vip-tiers"><span class="tier">Bronze</span><span class="tier">Silver</span><span class="tier">Gold</span><span class="tier">Platinum</span><span class="tier active">Diamond</span></div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- SPONSORSHIPS VIEW -->
+                <div class="view" data-view="sponsorships">
+                    <div class="view-hero small">
+                        <div class="view-hero-icon">🤝</div>
+                        <h1 class="view-hero-title">Sponsorships</h1>
+                        <p class="view-hero-desc">Proud partners of the biggest names in sports, esports, and entertainment.</p>
+                    </div>
+                    <div class="content-scroll-inner">
+                        <div class="sponsor-grid" id="sponsorGrid"></div>
+                        <div class="sponsor-quote">
+                            <blockquote>"Stake.us is redefining what a social casino experience should be. We're thrilled to partner with a brand that puts players first."</blockquote>
+                            <cite>— Partnership Team</cite>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- RESPONSIBLE GAMING VIEW -->
+                <div class="view" data-view="responsible-gaming">
+                    <div class="view-hero small">
+                        <div class="view-hero-icon">🛡</div>
+                        <h1 class="view-hero-title">Responsible Gaming</h1>
+                        <p class="view-hero-desc">Tools and resources to help you stay in control. Your wellbeing comes first.</p>
+                    </div>
+                    <div class="content-scroll-inner">
+                        <div class="rg-grid">
+                            <div class="rg-card">
+                                <div class="rg-icon">⏸</div>
+                                <h3>Take a Break</h3>
+                                <p>Set cooling-off periods from 24 hours to 6 weeks. Your account will be temporarily suspended.</p>
+                                <button class="btn btn-rg">Set Break</button>
+                            </div>
+                            <div class="rg-card">
+                                <div class="rg-icon">📊</div>
+                                <h3>Activity Limits</h3>
+                                <p>Set daily, weekly, or monthly limits on your gameplay time and Gold Coin purchases.</p>
+                                <button class="btn btn-rg">Manage Limits</button>
+                            </div>
+                            <div class="rg-card">
+                                <div class="rg-icon">🚫</div>
+                                <h3>Self Exclusion</h3>
+                                <p>Exclude yourself from the platform for a minimum of 6 months. This cannot be reversed early.</p>
+                                <button class="btn btn-rg">Learn More</button>
+                            </div>
+                            <div class="rg-card">
+                                <div class="rg-icon">📋</div>
+                                <h3>Reality Check</h3>
+                                <p>Get periodic reminders showing how long you've been playing and your net results.</p>
+                                <button class="btn btn-rg">Enable Reminders</button>
+                            </div>
+                            <div class="rg-card wide">
+                                <div class="rg-icon">📞</div>
+                                <h3>Need Help?</h3>
+                                <p>If you or someone you know has a gambling problem, help is available. Contact the National Council on Problem Gambling at <strong>1-800-522-4700</strong> or visit <strong>ncpgambling.org</strong>.</p>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- LIVE SUPPORT VIEW -->
+                <div class="view" data-view="live-support">
+                    <div class="view-hero small">
+                        <div class="view-hero-icon">💬</div>
+                        <h1 class="view-hero-title">Live Support</h1>
+                        <p class="view-hero-desc">24/7 support from our dedicated team. Find answers or chat with an agent.</p>
+                    </div>
+                    <div class="content-scroll-inner">
+                        <div class="support-grid">
+                            <div class="support-faq">
+                                <h3>Frequently Asked Questions</h3>
+                                <div class="faq-list" id="faqList"></div>
+                            </div>
+                            <div class="support-contact">
+                                <h3>Contact Us</h3>
+                                <div class="contact-card">
+                                    <div class="contact-method">
+                                        <span class="contact-icon">💬</span>
+                                        <div><strong>Live Chat</strong><span>Average response: 2 minutes</span></div>
+                                        <button class="btn btn-support">Start Chat</button>
+                                    </div>
+                                    <div class="contact-method">
+                                        <span class="contact-icon">✉</span>
+                                        <div><strong>Email</strong><span>support@stake.us</span></div>
+                                        <button class="btn btn-support">Send Email</button>
+                                    </div>
+                                    <div class="contact-method">
+                                        <span class="contact-icon">🐦</span>
+                                        <div><strong>Twitter / X</strong><span>@StakeSupport</span></div>
+                                        <button class="btn btn-support">Message</button>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- BLOG VIEW -->
+                <div class="view" data-view="blog">
+                    <div class="view-hero small">
+                        <div class="view-hero-icon">📝</div>
+                        <h1 class="view-hero-title">Blog</h1>
+                        <p class="view-hero-desc">News, game reviews, strategy guides, and updates from the Stake.us team.</p>
+                    </div>
+                    <div class="content-scroll-inner">
+                        <div class="blog-grid" id="blogGrid"></div>
+                    </div>
+                </div>
+
+                <!-- PROFILE VIEW -->
+                <div class="view" data-view="profile">
+                    <div class="view-hero small">
+                        <div class="view-hero-icon">👤</div>
+                        <h1 class="view-hero-title">My Profile</h1>
+                        <p class="view-hero-desc">Manage your account, preferences, and security settings.</p>
+                    </div>
+                    <div class="content-scroll-inner">
+                        <div class="profile-grid">
+                            <div class="profile-card">
+                                <h3>Account Information</h3>
+                                <div class="profile-field">
+                                    <label>Username</label>
+                                    <input type="text" id="profileUsername" value="PlayerOne" readonly>
+                                </div>
+                                <div class="profile-field">
+                                    <label>Email</label>
+                                    <input type="email" id="profileEmail" value="player@email.com" readonly>
+                                </div>
+                                <div class="profile-field">
+                                    <label>Member Since</label>
+                                    <input type="text" value="May 2026" readonly>
+                                </div>
+                                <div class="profile-field">
+                                    <label>VIP Level</label>
+                                    <div class="vip-badge">Bronze</div>
+                                </div>
+                            </div>
+                            <div class="profile-card">
+                                <h3>Statistics</h3>
+                                <div class="stat-row"><span>Total Bets</span><span class="stat-value" id="statBets">1,247</span></div>
+                                <div class="stat-row"><span>Total Wagered</span><span class="stat-value" id="statWagered">45.2M GC</span></div>
+                                <div class="stat-row"><span>Biggest Win</span><span class="stat-value highlight">360,000 GC</span></div>
+                                <div class="stat-row"><span>Favorite Game</span><span class="stat-value">Gates of Olympus</span></div>
+                                <div class="stat-row"><span>Win Rate</span><span class="stat-value">42.8%</span></div>
+                            </div>
+                            <div class="profile-card">
+                                <h3>Security</h3>
+                                <div class="security-item">
+                                    <div><strong>Two-Factor Authentication</strong><span>Disabled</span></div>
+                                    <button class="btn btn-rg">Enable</button>
+                                </div>
+                                <div class="security-item">
+                                    <div><strong>Email Verification</strong><span class="verified">Verified ✓</span></div>
+                                    <button class="btn btn-rg" disabled>Done</button>
+                                </div>
+                                <div class="security-item">
+                                    <div><strong>ID Verification</strong><span>Pending</span></div>
+                                    <button class="btn btn-rg">Upload</button>
+                                </div>
+                            </div>
+                            <div class="profile-card wide">
+                                <h3>Preferences</h3>
+                                <div class="pref-row">
+                                    <div><strong>Sound Effects</strong><span>Enable game sounds</span></div>
+                                    <label class="toggle"><input type="checkbox" checked><span class="toggle-slider"></span></label>
+                                </div>
+                                <div class="pref-row">
+                                    <div><strong>Animation Effects</strong><span>Enable visual animations</span></div>
+                                    <label class="toggle"><input type="checkbox" checked><span class="toggle-slider"></span></label>
+                                </div>
+                                <div class="pref-row">
+                                    <div><strong>Chat Notifications</strong><span>Show chat message alerts</span></div>
+                                    <label class="toggle"><input type="checkbox" checked><span class="toggle-slider"></span></label>
+                                </div>
+                                <div class="pref-row">
+                                    <div><strong>Promotional Emails</strong><span>Receive bonus offers by email</span></div>
+                                    <label class="toggle"><input type="checkbox"><span class="toggle-slider"></span></label>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- WALLET VIEW -->
+                <div class="view" data-view="wallet">
+                    <div class="view-hero small">
+                        <div class="view-hero-icon">💎</div>
+                        <h1 class="view-hero-title">Wallet</h1>
+                        <p class="view-hero-desc">Manage your balance, purchase Gold Coins, and redeem Stake Cash for prizes.</p>
+                    </div>
+                    <div class="content-scroll-inner">
+                        <div class="wallet-balances">
+                            <div class="wallet-balance-card gc">
+                                <div class="wallet-balance-icon">🪙</div>
+                                <div class="wallet-balance-info">
+                                    <span class="wallet-label">Gold Coins</span>
+                                    <span class="wallet-value" id="walletGc">560,000</span>
+                                </div>
+                                <button class="btn btn-wallet-action" id="buyGcBtn">Buy More</button>
+                            </div>
+                            <div class="wallet-balance-card sc">
+                                <div class="wallet-balance-icon">💎</div>
+                                <div class="wallet-balance-info">
+                                    <span class="wallet-label">Stake Cash</span>
+                                    <span class="wallet-value" id="walletSc">56.00</span>
+                                </div>
+                                <button class="btn btn-wallet-action secondary" id="redeemScBtn">Redeem</button>
+                            </div>
+                        </div>
+
+                        <div class="wallet-section">
+                            <h3 class="wallet-section-title">Purchase Gold Coins</h3>
+                            <div class="gc-packages" id="gcPackages"></div>
+                        </div>
+
+                        <div class="wallet-section">
+                            <h3 class="wallet-section-title">Redeem Stake Cash</h3>
+                            <div class="redeem-card">
+                                <div class="redeem-info">
+                                    <p>Redeem your Stake Cash for real prizes. Minimum redemption is <strong>30 SC</strong>. You must complete the <strong>3x playthrough</strong> requirement first.</p>
+                                    <div class="redeem-meta">
+                                        <span>Available: <strong id="redeemAvailable">56.00 SC</strong></span>
+                                        <span>Minimum: <strong>30 SC</strong></span>
+                                        <span>Playthrough: <strong id="redeemPlaythrough">2.1x / 3x</strong></span>
+                                    </div>
+                                </div>
+                                <div class="redeem-form">
+                                    <div class="form-group">
+                                        <label>Redeem Amount (SC)</label>
+                                        <input type="number" id="redeemAmount" placeholder="30" min="30" step="0.01">
+                                    </div>
+                                    <button class="btn btn-redeem" id="redeemSubmit">Request Redemption</button>
+                                </div>
+                            </div>
+                        </div>
+
+                        <div class="wallet-section">
+                            <h3 class="wallet-section-title">Transaction History</h3>
+                            <div class="wallet-table-wrap">
+                                <table class="wallet-table" id="walletTable"></table>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+            </div><!-- /views-container -->
+        </main>
+
+        <!-- Right Sidebar - Chat -->
+        <aside class="sidebar-right" id="sidebarRight">
+            <div class="chat-header">
+                <div class="chat-tabs">
+                    <button class="chat-tab active">English</button>
+                    <button class="chat-tab">Español</button>
+                </div>
+                <button class="chat-close" id="chatClose" aria-label="Close chat">
+                    <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><line x1="18" y1="6" x2="6" y2="18" stroke-linecap="round"/><line x1="6" y1="6" x2="18" y2="18" stroke-linecap="round"/></svg>
+                </button>
+            </div>
+            <div class="chat-online">
+                <span class="online-dot"></span>
+                <span class="online-count">2,847 online</span>
+            </div>
+            <div class="chat-messages" id="chatMessages"></div>
+            <div class="chat-input-area">
+                <div class="chat-input-wrap">
+                    <input type="text" class="chat-input" placeholder="Send a message..." id="chatInput">
+                    <button class="chat-send" id="chatSend" aria-label="Send">
+                        <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><line x1="22" y1="2" x2="11" y2="13" stroke-linecap="round"/><polygon points="22 2 15 22 11 13 2 9 22 2" stroke-linecap="round" stroke-linejoin="round"/></svg>
+                    </button>
+                </div>
+                <div class="chat-hint">Verify your account to chat</div>
+            </div>
+        </aside>
+    </div>
+
+    <!-- Login Modal -->
+    <div class="modal-overlay" id="loginModal">
+        <div class="modal">
+            <button class="modal-close" id="loginClose" aria-label="Close">
+                <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><line x1="18" y1="6" x2="6" y2="18" stroke-linecap="round"/><line x1="6" y1="6" x2="18" y2="18" stroke-linecap="round"/></svg>
+            </button>
+            <div class="modal-header">
+                <div class="modal-icon">
+                    <svg width="32" height="32" viewBox="0 0 40 40" fill="none"><path d="M20 2L4 11v18l16 9 16-9V11L20 2z" stroke="#39ff14" stroke-width="1.5" fill="none"/><path d="M20 10l-8 4.5v9L20 28l8-4.5v-9L20 10z" fill="#39ff14" opacity="0.15"/><circle cx="20" cy="20" r="4" fill="#39ff14"/><circle cx="20" cy="20" r="1.5" fill="#050508"/></svg>
+                </div>
+                <h2 class="modal-title">Welcome Back</h2>
+                <p class="modal-subtitle">Log in to your Stake.us account</p>
+            </div>
+            <form class="modal-form" id="loginForm">
+                <div class="form-group">
+                    <label for="loginEmail">Email</label>
+                    <input type="email" id="loginEmail" placeholder="you@example.com" required>
+                    <span class="form-error" id="loginEmailError"></span>
+                </div>
+                <div class="form-group">
+                    <label for="loginPassword">Password</label>
+                    <input type="password" id="loginPassword" placeholder="Enter your password" required>
+                    <span class="form-error" id="loginPasswordError"></span>
+                </div>
+                <div class="form-options">
+                    <label class="checkbox"><input type="checkbox" id="loginRemember"><span class="checkmark"></span>Remember me</label>
+                    <a href="#" class="form-link">Forgot password?</a>
+                </div>
+                <button type="submit" class="btn btn-modal-submit">
+                    <span class="btn-shimmer"></span>
+                    Log In
+                </button>
+            </form>
+            <div class="modal-footer">
+                <p>Don't have an account? <button class="text-link" id="switchToSignup">Sign Up</button></p>
+            </div>
+        </div>
+    </div>
+
+    <!-- Signup Modal -->
+    <div class="modal-overlay" id="signupModal">
+        <div class="modal wide">
+            <button class="modal-close" id="signupClose" aria-label="Close">
+                <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><line x1="18" y1="6" x2="6" y2="18" stroke-linecap="round"/><line x1="6" y1="6" x2="18" y2="18" stroke-linecap="round"/></svg>
+            </button>
+            <div class="modal-header">
+                <div class="modal-icon">
+                    <svg width="32" height="32" viewBox="0 0 40 40" fill="none"><path d="M20 2L4 11v18l16 9 16-9V11L20 2z" stroke="#39ff14" stroke-width="1.5" fill="none"/><path d="M20 10l-8 4.5v9L20 28l8-4.5v-9L20 10z" fill="#39ff14" opacity="0.15"/><circle cx="20" cy="20" r="4" fill="#39ff14"/><circle cx="20" cy="20" r="1.5" fill="#050508"/></svg>
+                </div>
+                <h2 class="modal-title">Create Account</h2>
+                <p class="modal-subtitle">Join Stake.us and get <span class="highlight">560,000 GC + 56 SC</span> FREE</p>
+            </div>
+            <form class="modal-form" id="signupForm">
+                <div class="form-row">
+                    <div class="form-group">
+                        <label for="signupUsername">Username</label>
+                        <input type="text" id="signupUsername" placeholder="Choose a username" minlength="3" maxlength="20" required>
+                        <span class="form-error" id="signupUsernameError"></span>
+                    </div>
+                    <div class="form-group">
+                        <label for="signupEmail">Email</label>
+                        <input type="email" id="signupEmail" placeholder="you@example.com" required>
+                        <span class="form-error" id="signupEmailError"></span>
+                    </div>
+                </div>
+                <div class="form-row">
+                    <div class="form-group">
+                        <label for="signupPassword">Password</label>
+                        <input type="password" id="signupPassword" placeholder="Min 8 characters" minlength="8" required>
+                        <span class="form-error" id="signupPasswordError"></span>
+                    </div>
+                    <div class="form-group">
+                        <label for="signupConfirm">Confirm Password</label>
+                        <input type="password" id="signupConfirm" placeholder="Repeat password" required>
+                        <span class="form-error" id="signupConfirmError"></span>
+                    </div>
+                </div>
+                <div class="form-group">
+                    <label for="signupDob">Date of Birth</label>
+                    <input type="date" id="signupDob" required>
+                    <span class="form-error" id="signupDobError"></span>
+                </div>
+                <div class="form-options">
+                    <label class="checkbox">
+                        <input type="checkbox" id="signupTerms" required>
+                        <span class="checkmark"></span>
+                        I agree to the <a href="#" class="form-link">Terms of Service</a> and <a href="#" class="form-link">Privacy Policy</a>
+                    </label>
+                    <span class="form-error" id="signupTermsError"></span>
+                </div>
+                <button type="submit" class="btn btn-modal-submit">
+                    <span class="btn-shimmer"></span>
+                    Create Account
+                </button>
+            </form>
+            <div class="modal-footer">
+                <p>Already have an account? <button class="text-link" id="switchToLogin">Log In</button></p>
+            </div>
+        </div>
+    </div>
+
+    <!-- Toast Notification -->
+    <div class="toast-container" id="toastContainer"></div>
+
+    <script src="js/main.js"></script>
+</body>
+</html>
