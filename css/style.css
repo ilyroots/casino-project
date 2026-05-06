@@ -3828,3 +3828,159 @@ body:hover .cursor-glow {
         height: 140px;
     }
 }
+
+
+/* ═══════════════════════════════════════════════
+   BALANCE WIDGET & CURRENCY PICKER
+   ═══════════════════════════════════════════════ */
+
+.balance-widget {
+    display: flex;
+    align-items: center;
+    gap: 0.5rem;
+    padding: 0.4rem 0.9rem;
+    background: var(--deep);
+    border: 1px solid var(--border-subtle);
+    border-radius: 10px;
+    min-width: 160px;
+    transition: all 0.25s ease;
+}
+.balance-widget:focus-within,
+.balance-widget:hover {
+    border-color: var(--neon-dim);
+    box-shadow: 0 0 0 2px var(--neon-faint);
+}
+.balance-widget .bal-icon {
+    font-size: 1.1rem;
+}
+.balance-widget .bal-main {
+    display: flex;
+    flex-direction: column;
+    line-height: 1.25;
+}
+.balance-widget .bal-label {
+    font-size: 0.6rem;
+    font-weight: 600;
+    letter-spacing: 0.08em;
+    color: var(--text-tertiary);
+    text-transform: uppercase;
+}
+.balance-widget .bal-value {
+    font-family: var(--font-mono);
+    font-size: 0.95rem;
+    font-weight: 700;
+    color: var(--text-primary);
+    white-space: nowrap;
+}
+.balance-widget .bal-value.usd {
+    color: var(--neon);
+}
+.balance-guest {
+    font-size: 0.78rem;
+    color: var(--text-tertiary);
+    padding: 0.2rem 0;
+}
+
+/* Currency Picker */
+.balance-currency-picker {
+    position: relative;
+}
+.currency-picker-btn {
+    display: flex;
+    align-items: center;
+    gap: 0.35rem;
+    padding: 0.4rem 0.7rem;
+    background: var(--surface);
+    border: 1px solid var(--border-subtle);
+    border-radius: 8px;
+    color: var(--text-secondary);
+    font-family: var(--font-body);
+    font-size: 0.75rem;
+    font-weight: 600;
+    cursor: pointer;
+    transition: all 0.2s ease;
+}
+.currency-picker-btn:hover {
+    border-color: var(--neon-dim);
+    color: var(--neon);
+    background: var(--neon-faint);
+}
+.currency-picker-btn .picker-label {
+    text-transform: uppercase;
+    letter-spacing: 0.05em;
+}
+.currency-picker-btn svg {
+    transition: transform 0.2s ease;
+}
+.balance-currency-picker.open .currency-picker-btn svg {
+    transform: rotate(180deg);
+}
+
+.currency-picker-dropdown {
+    position: absolute;
+    top: calc(100% + 6px);
+    right: 0;
+    width: 220px;
+    background: var(--surface);
+    border: 1px solid var(--border-subtle);
+    border-radius: 12px;
+    padding: 0.4rem;
+    opacity: 0;
+    visibility: hidden;
+    transform: translateY(-6px) scale(0.97);
+    transition: all 0.25s var(--ease-out-expo);
+    z-index: 500;
+    box-shadow: 0 20px 60px rgba(0,0,0,0.5);
+}
+.balance-currency-picker.open .currency-picker-dropdown {
+    opacity: 1;
+    visibility: visible;
+    transform: translateY(0) scale(1);
+}
+.currency-picker-dropdown::before {
+    content: '';
+    position: absolute;
+    top: -5px;
+    right: 14px;
+    width: 10px;
+    height: 10px;
+    background: var(--surface);
+    border-left: 1px solid var(--border-subtle);
+    border-top: 1px solid var(--border-subtle);
+    transform: rotate(45deg);
+}
+
+.picker-option {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    padding: 0.55rem 0.7rem;
+    border-radius: 8px;
+    cursor: pointer;
+    transition: all 0.15s ease;
+}
+.picker-option:hover {
+    background: var(--neon-faint);
+}
+.picker-option.active {
+    background: var(--neon-faint);
+    border: 1px solid var(--neon-dim);
+}
+.picker-option.active .picker-curr {
+    color: var(--neon);
+}
+.picker-curr {
+    font-size: 0.82rem;
+    font-weight: 600;
+    color: var(--text-secondary);
+}
+.picker-val {
+    font-family: var(--font-mono);
+    font-size: 0.75rem;
+    font-weight: 600;
+    color: var(--text-primary);
+}
+
+/* Remove old styles that are no longer needed */
+.balance-display { display: none; }
+.btn-currency-toggle { display: none; }

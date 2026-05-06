@@ -8,7 +8,7 @@
 
     const API_URL = 'http://localhost:5000';
     const CURRENCIES = ['BTC', 'ETH', 'SOL', 'USDT', 'LTC'];
-    let currentBalanceMode = 'crypto'; // 'crypto' or 'usd'
+    let selectedDisplayCurrency = 'total'; // 'total', 'BTC', 'ETH', 'SOL', 'USDT', 'LTC'
     let userBalances = {};
 
     // ═══════════════════════════════════════════════
@@ -85,7 +85,7 @@
     // ═══════════════════════════════════════════════
     async function loadBalances() {
         try {
-            const data = await api(`/api/balance?convert=${currentBalanceMode}`);
+            const data = await api('/api/balance/all');
             userBalances = data.balances || {};
             renderBalances();
         } catch (err) {
@@ -94,48 +94,67 @@
     }
 
     function renderBalances() {
-        const container = $('#balanceDisplay');
-        if (!container) return;
+        const widget = $('#balanceWidget');
+        if (!widget) return;
 
         if (!getToken()) {
-            renderGuestBalances();
+            widget.innerHTML = `<div class="balance-guest">Log in to view balances</div>`;
             return;
         }
 
-        // Header balance bar
-        let html = '';
+        // Calculate total USD
+        let totalUsd = 0;
+        CURRENCIES.forEach(curr => {
+            totalUsd += userBalances[curr]?.usd || 0;
+        });
+
+        // Update dropdown values
+        $('#pickTotal').textContent = `$${totalUsd.toLocaleString('en-US', {minimumFractionDigits: 2, maximumFractionDigits: 2})}`;
         CURRENCIES.forEach(curr => {
             const info = userBalances[curr];
-            let display = '';
-            if (currentBalanceMode === 'usd') {
-                display = `$${(info?.usd || 0).toLocaleString('en-US', {minimumFractionDigits: 2, maximumFractionDigits: 2})}`;
-            } else {
-                const val = info?.crypto || info || 0;
-                display = `${val.toFixed(val < 0.01 ? 8 : val < 1 ? 6 : 4)} ${curr}`;
-            }
-            html += `<div class="balance-item-crypto"><span class="bal-curr">${curr}</span><span class="bal-amt">${display}</span></div>`;
+            const val = info?.crypto || 0;
+            const el = $(`#pick${curr}`);
+            if (el) el.textContent = val.toFixed(curr === 'USDT' ? 2 : 8);
         });
-        container.innerHTML = html;
 
-        // Wallet page balances
+        // Render main widget based on selected currency
+        let icon = '💰', label = 'Total Balance', value = '';
+        if (selectedDisplayCurrency === 'total') {
+            icon = '💰';
+            label = 'Total Balance';
+            value = `$${totalUsd.toLocaleString('en-US', {minimumFractionDigits: 2, maximumFractionDigits: 2})}`;
+        } else {
+            const curr = selectedDisplayCurrency;
+            const info = userBalances[curr];
+            const val = info?.crypto || 0;
+            const usd = info?.usd || 0;
+            icon = {BTC:'₿',ETH:'Ξ',SOL:'◎',USDT:'₮',LTC:'Ł'}[curr] || '$';
+            label = curr;
+            value = `${val.toFixed(curr === 'USDT' ? 2 : 8)} ${curr}`;
+        }
+
+        widget.innerHTML = `
+            <span class="bal-icon">${icon}</span>
+            <div class="bal-main">
+                <span class="bal-label">${label}</span>
+                <span class="bal-value ${selectedDisplayCurrency === 'total' ? 'usd' : ''}">${value}</span>
+            </div>
+        `;
+
+        // Wallet page balances (all currencies)
         const walletBalances = $('#walletBalances');
         if (walletBalances) {
             let whtml = '';
             CURRENCIES.forEach(curr => {
                 const info = userBalances[curr];
-                let display = '';
-                if (currentBalanceMode === 'usd') {
-                    const usd = info?.usd || 0;
-                    display = `$${usd.toLocaleString('en-US', {minimumFractionDigits: 2, maximumFractionDigits: 2})}`;
-                } else {
-                    const val = info || 0;
-                    display = `${val.toFixed(val < 0.01 ? 8 : val < 1 ? 6 : 4)} ${curr}`;
-                }
+                const val = info?.crypto || 0;
+                const usd = info?.usd || 0;
                 whtml += `
                     <div class="wallet-balance-card">
                         <div class="wallet-balance-info">
                             <span class="wallet-label">${curr}</span>
-                            <span class="wallet-value">${display}</span>
+                            <span class="wallet-value">${val.toFixed(curr === 'USDT' ? 2 : 8)} ${curr}</span>
+                            <span class="wallet-usd" style="font-family:var(--font-mono);font-size:0.7rem;color:var(--text-tertiary);">$${usd.toLocaleString('en-US',{minimumFractionDigits:2,maximumFractionDigits:2})}</span>
                         </div>
                     </div>`;
             });
@@ -146,26 +165,14 @@
         CURRENCIES.forEach(curr => {
             const el = $(`#bal${curr}`);
             if (el) {
-                const info = userBalances[curr];
-                const val = info?.crypto || info || 0;
+                const val = userBalances[curr]?.crypto || 0;
                 el.textContent = val.toFixed(curr === 'USDT' ? 2 : 8);
             }
         });
         const totalEl = $('#balTotalUSD');
         if (totalEl) {
-            let total = 0;
-            CURRENCIES.forEach(curr => {
-                const info = userBalances[curr];
-                total += info?.usd || 0;
-            });
-            totalEl.textContent = `$${total.toLocaleString('en-US', {minimumFractionDigits: 2, maximumFractionDigits: 2})}`;
+            totalEl.textContent = `$${totalUsd.toLocaleString('en-US', {minimumFractionDigits: 2, maximumFractionDigits: 2})}`;
         }
-    }
-
-    function renderGuestBalances() {
-        const container = $('#balanceDisplay');
-        if (!container) return;
-        container.innerHTML = `<div class="balance-guest">Log in to view balances</div>`;
     }
 
     // ═══════════════════════════════════════════════
@@ -413,11 +420,28 @@
     // ═══════════════════════════════════════════════
     // CURRENCY MODE SWITCHER
     // ═══════════════════════════════════════════════
-    function initCurrencySwitcher() {
-        $('#currencyToggle')?.addEventListener('click', async () => {
-            currentBalanceMode = currentBalanceMode === 'crypto' ? 'usd' : 'crypto';
-            $('#currencyToggle').textContent = currentBalanceMode === 'crypto' ? 'USD' : 'Crypto';
-            await loadBalances();
+    function initCurrencyPicker() {
+        const picker = $('#currencyPicker');
+        const btn = $('#currencyPickerBtn');
+        const dropdown = $('#currencyPickerDropdown');
+
+        btn?.addEventListener('click', (e) => {
+            e.stopPropagation();
+            picker?.classList.toggle('open');
+        });
+
+        document.addEventListener('click', (e) => {
+            if (!picker?.contains(e.target)) picker?.classList.remove('open');
+        });
+
+        $$('.picker-option').forEach(opt => {
+            opt.addEventListener('click', () => {
+                selectedDisplayCurrency = opt.dataset.curr;
+                $$('.picker-option').forEach(o => o.classList.remove('active'));
+                opt.classList.add('active');
+                picker?.classList.remove('open');
+                renderBalances();
+            });
         });
     }
 
@@ -511,7 +535,7 @@
         'Lost 0.05 BTC but we go again',
         'The new Hacksaw games are insane',
         'Just withdrew <span class="amount">2.5 ETH</span>!',
-        'RIP my balance, all in on roulette',
+        'RIP my balance, all in on dice',
         'Crash is so rigged today lol',
         'GG to everyone in the daily race',
         'Mines is actually paying out today',
@@ -519,10 +543,10 @@
         'Is the chat always this dead?',
         'Just joined, this site is fire',
         'Waiting for my deposit to confirm...',
-        '<span class="win">W</span> streak on blackjack!',
+        '<span class="win">W</span> streak on crash!',
         'RIP 10x in a row on dice',
         'The live dealers are so entertaining',
-        'Can someone explain how showdowns work?',
+        'Can someone explain how challenges work?',
         'First time withdrawing, wish me luck',
         'How do you get VIP status?',
         'Best slots for wagering?',
@@ -578,16 +602,6 @@
     // GAME GRIDS (static, unchanged from before)
     // ═══════════════════════════════════════════════
     const GAME_DATA = {
-        'trending-full': [
-            { name: 'Sweet Bonanza', provider: 'Pragmatic Play', emoji: '🍭' },
-            { name: 'Gates of Olympus', provider: 'Pragmatic Play', emoji: '⚡' },
-            { name: 'Sugar Rush', provider: 'Pragmatic Play', emoji: '🍬' },
-            { name: 'Big Bass Bonanza', provider: 'Reel Kingdom', emoji: '🎣' },
-            { name: 'Wanted Dead or Wild', provider: 'Hacksaw', emoji: '🤠' },
-            { name: 'Zeus vs Hades', provider: 'Pragmatic Play', emoji: '⚔️' },
-            { name: 'Starlight Princess', provider: 'Pragmatic Play', emoji: '👸' },
-            { name: 'Hand of Anubis', provider: 'Hacksaw', emoji: '🐺' },
-        ],
         'originals-full': [
             { name: 'Dice', provider: 'Donk Originals', emoji: '🎲' },
             { name: 'Plinko', provider: 'Donk Originals', emoji: '🔵' },
@@ -595,7 +609,6 @@
             { name: 'Crash', provider: 'Donk Originals', emoji: '🚀' },
             { name: 'Limbo', provider: 'Donk Originals', emoji: '📉' },
             { name: 'Keno', provider: 'Donk Originals', emoji: '🎯' },
-            { name: 'Roulette', provider: 'Donk Originals', emoji: '🔴' },
             { name: 'Hilo', provider: 'Donk Originals', emoji: '🃏' },
         ],
         slots: [
@@ -607,16 +620,6 @@
             { name: 'Temple Tumble', provider: 'Relax Gaming', emoji: '🏛️' },
             { name: 'Razor Returns', provider: 'Push Gaming', emoji: '🦈' },
             { name: 'Le Bandit', provider: 'Hacksaw', emoji: '🦝' },
-        ],
-        'live-full': [
-            { name: 'Lightning Roulette', provider: 'Evolution', emoji: '⚡' },
-            { name: 'Crazy Time', provider: 'Evolution', emoji: '🎡' },
-            { name: 'Blackjack VIP', provider: 'Pragmatic Live', emoji: '♠️' },
-            { name: 'Monopoly Live', provider: 'Evolution', emoji: '🎩' },
-            { name: 'Speed Baccarat', provider: 'Evolution', emoji: '🃏' },
-            { name: 'Dream Catcher', provider: 'Evolution', emoji: '💫' },
-            { name: 'Deal or No Deal', provider: 'Evolution', emoji: '📦' },
-            { name: 'Mega Ball', provider: 'Evolution', emoji: '🔴' },
         ],
     };
 
@@ -684,7 +687,7 @@
         initUserMenu();
         initDeposit();
         initWithdraw();
-        initCurrencySwitcher();
+        initCurrencyPicker();
         initRouter();
         initGameGrids();
         initMobileNav();
