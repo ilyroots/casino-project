@@ -173,13 +173,13 @@ def update_balance(user_id, currency, amount):
     conn.close()
 
 
-def create_transaction(user_id, tx_type, currency, amount, wallet_address='', tx_hash=''):
+def create_transaction(user_id, tx_type, currency, amount, wallet_address='', tx_hash='', status='pending'):
     conn = get_db()
     c = conn.cursor()
     now = datetime.utcnow().isoformat()
     c.execute(
         'INSERT INTO transactions (user_id, type, currency, amount, status, tx_hash, wallet_address, created_at) VALUES (?, ?, ?, ?, ?, ?, ?, ?)',
-        (user_id, tx_type, currency, amount, 'pending', tx_hash, wallet_address, now)
+        (user_id, tx_type, currency, amount, status, tx_hash, wallet_address, now)
     )
     tx_id = c.lastrowid
     conn.commit()

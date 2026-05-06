@@ -427,25 +427,231 @@
 
                 <!-- BLACKJACK VIEW -->
                 <div class="view" data-view="blackjack">
-                    <div class="view-hero small">
-                        <div class="view-hero-icon">♠️</div>
-                        <h1 class="view-hero-title">Blackjack</h1>
-                        <p class="view-hero-desc">Classic 21 action with multiple variants. Beat the dealer to 21 without going bust.</p>
+                    <div class="bj-layout">
+                        <!-- LEFT: Control Panel -->
+                        <div class="bj-panel">
+                            <div class="bj-panel-inner">
+                                <div class="bj-amount-section">
+                                    <label class="bj-amount-label">Amount</label>
+                                    <div class="bj-amount-input-row">
+                                        <div class="bj-amount-input-wrap">
+                                            <input type="number" class="bj-amount-input" id="bjBetInput" value="10" step="0.01" min="0.01">
+                                            <span class="bj-amount-curr" id="bjAmountCurr">$</span>
+                                        </div>
+                                        <button class="bj-amount-mod" data-mod="0.5">½</button>
+                                        <button class="bj-amount-mod" data-mod="2">2×</button>
+                                    </div>
+                                </div>
+
+                                <div class="bj-action-grid" id="bjActionGrid">
+                                    <button class="bj-grid-btn" id="bjHitBtn" disabled>
+                                        <span>Hit</span>
+                                    </button>
+                                    <button class="bj-grid-btn" id="bjStandBtn" disabled>
+                                        <span>Stand</span>
+                                    </button>
+                                    <button class="bj-grid-btn" id="bjSplitBtn" disabled>
+                                        <span>Split</span>
+                                    </button>
+                                    <button class="bj-grid-btn" id="bjDoubleBtn" disabled>
+                                        <span>Double</span>
+                                    </button>
+                                </div>
+
+                                <button class="bj-play-btn" id="bjDealBtn">Play</button>
+                                <button class="bj-play-btn hidden" id="bjRebetBtn">Play Again</button>
+
+                                <div class="bj-history-area">
+                                    <div class="bj-history-header">
+                                        <span>History</span>
+                                        <button class="bj-history-clear" id="bjClearHistory">Clear</button>
+                                    </div>
+                                    <div class="bj-history-list" id="bjHistoryList"></div>
+                                </div>
+                            </div>
+                        </div>
+
+                        <!-- RIGHT: Game Table -->
+                        <div class="bj-table-area">
+                            <div class="bj-table-top">
+                                <div class="bj-hand-label-d">Dealer <span id="dealerValue"></span></div>
+                                <div class="bj-cards-area" id="dealerCards"></div>
+                            </div>
+
+                            <div class="bj-table-mid">
+                                <div class="bj-rules-banner" id="bjRulesBanner">
+                                    <div>BLACKJACK PAYS 3 TO 2</div>
+                                    <div>INSURANCE PAYS 2 TO 1</div>
+                                </div>
+                                <div class="bj-result-overlay" id="bjResultOverlay"></div>
+                            </div>
+
+                            <div class="bj-table-bottom">
+                                <div class="bj-hand-label-p">You <span id="playerValue"></span></div>
+                                <div class="bj-cards-area" id="playerCards"></div>
+                            </div>
+
+                            <div class="bj-deck-icon" id="bjDeckIcon">
+                                <div class="bj-deck-card"></div>
+                                <div class="bj-deck-card"></div>
+                                <div class="bj-deck-card"></div>
+                            </div>
+                        </div>
                     </div>
-                    <div class="content-scroll-inner">
-                        <div class="games-grid large" data-render="blackjack-full"></div>
+
+                    <!-- Bottom Bar -->
+                    <div class="bj-bottom-bar">
+                        <div class="bj-bar-left">
+                            <button class="bj-bar-btn" id="bjSoundToggle" title="Sound">🔊</button>
+                            <button class="bj-bar-btn" id="bjFullscreenBtn" title="Fullscreen">⛶</button>
+                        </div>
+                        <div class="bj-bar-center">DONK</div>
+                        <div class="bj-bar-right">
+                            <button class="bj-bar-btn bj-fairness-btn" id="bjFairBtn">Fairness</button>
+                        </div>
+                    </div>
+
+                    <!-- Game Info Footer -->
+                    <div class="bj-game-footer">
+                        <div class="bj-footer-left">
+                            <div class="bj-footer-icon">◈</div>
+                            <div class="bj-footer-meta">
+                                <div class="bj-footer-name">Donk Originals</div>
+                                <div class="bj-footer-players"><span class="bj-live-dot"></span><span id="bjPlayerCount">2.4K</span> Playing</div>
+                            </div>
+                        </div>
+                        <div class="bj-footer-right">
+                            <button class="bj-follow-btn" id="bjFollowBtn">♡ Follow</button>
+                        </div>
+                    </div>
+
+                    <!-- Provably Fair Modal -->
+                    <div class="bj-modal hidden" id="bjFairModal">
+                        <div class="bj-modal-overlay"></div>
+                        <div class="bj-modal-content">
+                            <h3>Provably Fair</h3>
+                            <p>Each game uses a SHA-256 hash chain for verifiable randomness.</p>
+                            <div class="bj-fair-row"><span>Server Seed (hashed)</span><code id="fairServer">---</code></div>
+                            <div class="bj-fair-row"><span>Client Seed</span><code id="fairClient">---</code></div>
+                            <div class="bj-fair-row"><span>Nonce</span><code id="fairNonce">---</code></div>
+                            <button class="bj-modal-close" id="bjFairClose">Close</button>
+                        </div>
                     </div>
                 </div>
 
-                <!-- ROULETTE VIEW -->
+                <!-- ROULETTE GAME VIEW -->
                 <div class="view" data-view="roulette">
-                    <div class="view-hero small">
-                        <div class="view-hero-icon">🎡</div>
-                        <h1 class="view-hero-title">Roulette</h1>
-                        <p class="view-hero-desc">Spin the wheel with European, American, and French roulette variants.</p>
-                    </div>
-                    <div class="content-scroll-inner">
-                        <div class="games-grid large" data-render="roulette-full"></div>
+                    <div class="roulette-game">
+                        <div class="roulette-header">
+                            <div class="roulette-title">
+                                <span class="rt-icon">◈</span>
+                                <div>
+                                    <h2>European Roulette</h2>
+                                    <span class="rt-sub">Single Zero • 37 Pockets • RTP 97.3%</span>
+                                </div>
+                            </div>
+                            <div class="roulette-balance" id="rouletteBalance">
+                                <span class="rb-label">Balance</span>
+                                <span class="rb-value" id="rbValue">--</span>
+                            </div>
+                        </div>
+
+                        <div class="roulette-main">
+                            <div class="roulette-wheel-section">
+                                <canvas id="rouletteCanvas" width="420" height="420"></canvas>
+                                <div class="wheel-result" id="wheelResult"></div>
+                            </div>
+
+                            <div class="roulette-table-section">
+                                <div class="roulette-table" id="rouletteTable">
+                                    <!-- 0 -->
+                                    <div class="rt-cell rt-zero" style="grid-column:1;grid-row:1/span 3" data-bet='{"type":"straight","nums":[0]}'>0</div>
+                                    <!-- Row 1 -->
+                                    <div class="rt-cell rt-red"   style="grid-column:2;grid-row:1" data-bet='{"type":"straight","nums":[3]}'>3</div>
+                                    <div class="rt-cell rt-black" style="grid-column:3;grid-row:1" data-bet='{"type":"straight","nums":[6]}'>6</div>
+                                    <div class="rt-cell rt-red"   style="grid-column:4;grid-row:1" data-bet='{"type":"straight","nums":[9]}'>9</div>
+                                    <div class="rt-cell rt-red"   style="grid-column:5;grid-row:1" data-bet='{"type":"straight","nums":[12]}'>12</div>
+                                    <div class="rt-cell rt-black" style="grid-column:6;grid-row:1" data-bet='{"type":"straight","nums":[15]}'>15</div>
+                                    <div class="rt-cell rt-red"   style="grid-column:7;grid-row:1" data-bet='{"type":"straight","nums":[18]}'>18</div>
+                                    <div class="rt-cell rt-red"   style="grid-column:8;grid-row:1" data-bet='{"type":"straight","nums":[21]}'>21</div>
+                                    <div class="rt-cell rt-black" style="grid-column:9;grid-row:1" data-bet='{"type":"straight","nums":[24]}'>24</div>
+                                    <div class="rt-cell rt-red"   style="grid-column:10;grid-row:1" data-bet='{"type":"straight","nums":[27]}'>27</div>
+                                    <div class="rt-cell rt-red"   style="grid-column:11;grid-row:1" data-bet='{"type":"straight","nums":[30]}'>30</div>
+                                    <div class="rt-cell rt-black" style="grid-column:12;grid-row:1" data-bet='{"type":"straight","nums":[33]}'>33</div>
+                                    <div class="rt-cell rt-red"   style="grid-column:13;grid-row:1" data-bet='{"type":"straight","nums":[36]}'>36</div>
+                                    <!-- Row 2 -->
+                                    <div class="rt-cell rt-black" style="grid-column:2;grid-row:2" data-bet='{"type":"straight","nums":[2]}'>2</div>
+                                    <div class="rt-cell rt-red"   style="grid-column:3;grid-row:2" data-bet='{"type":"straight","nums":[5]}'>5</div>
+                                    <div class="rt-cell rt-black" style="grid-column:4;grid-row:2" data-bet='{"type":"straight","nums":[8]}'>8</div>
+                                    <div class="rt-cell rt-black" style="grid-column:5;grid-row:2" data-bet='{"type":"straight","nums":[11]}'>11</div>
+                                    <div class="rt-cell rt-red"   style="grid-column:6;grid-row:2" data-bet='{"type":"straight","nums":[14]}'>14</div>
+                                    <div class="rt-cell rt-red"   style="grid-column:7;grid-row:2" data-bet='{"type":"straight","nums":[17]}'>17</div>
+                                    <div class="rt-cell rt-black" style="grid-column:8;grid-row:2" data-bet='{"type":"straight","nums":[20]}'>20</div>
+                                    <div class="rt-cell rt-red"   style="grid-column:9;grid-row:2" data-bet='{"type":"straight","nums":[23]}'>23</div>
+                                    <div class="rt-cell rt-black" style="grid-column:10;grid-row:2" data-bet='{"type":"straight","nums":[26]}'>26</div>
+                                    <div class="rt-cell rt-black" style="grid-column:11;grid-row:2" data-bet='{"type":"straight","nums":[29]}'>29</div>
+                                    <div class="rt-cell rt-red"   style="grid-column:12;grid-row:2" data-bet='{"type":"straight","nums":[32]}'>32</div>
+                                    <div class="rt-cell rt-red"   style="grid-column:13;grid-row:2" data-bet='{"type":"straight","nums":[35]}'>35</div>
+                                    <!-- Row 3 -->
+                                    <div class="rt-cell rt-red"   style="grid-column:2;grid-row:3" data-bet='{"type":"straight","nums":[1]}'>1</div>
+                                    <div class="rt-cell rt-black" style="grid-column:3;grid-row:3" data-bet='{"type":"straight","nums":[4]}'>4</div>
+                                    <div class="rt-cell rt-red"   style="grid-column:4;grid-row:3" data-bet='{"type":"straight","nums":[7]}'>7</div>
+                                    <div class="rt-cell rt-black" style="grid-column:5;grid-row:3" data-bet='{"type":"straight","nums":[10]}'>10</div>
+                                    <div class="rt-cell rt-black" style="grid-column:6;grid-row:3" data-bet='{"type":"straight","nums":[13]}'>13</div>
+                                    <div class="rt-cell rt-red"   style="grid-column:7;grid-row:3" data-bet='{"type":"straight","nums":[16]}'>16</div>
+                                    <div class="rt-cell rt-red"   style="grid-column:8;grid-row:3" data-bet='{"type":"straight","nums":[19]}'>19</div>
+                                    <div class="rt-cell rt-black" style="grid-column:9;grid-row:3" data-bet='{"type":"straight","nums":[22]}'>22</div>
+                                    <div class="rt-cell rt-red"   style="grid-column:10;grid-row:3" data-bet='{"type":"straight","nums":[25]}'>25</div>
+                                    <div class="rt-cell rt-black" style="grid-column:11;grid-row:3" data-bet='{"type":"straight","nums":[28]}'>28</div>
+                                    <div class="rt-cell rt-black" style="grid-column:12;grid-row:3" data-bet='{"type":"straight","nums":[31]}'>31</div>
+                                    <div class="rt-cell rt-black" style="grid-column:13;grid-row:3" data-bet='{"type":"straight","nums":[34]}'>34</div>
+                                    <!-- Column bets -->
+                                    <div class="rt-col-bet" style="grid-column:14;grid-row:1" data-bet='{"type":"column","nums":[3,6,9,12,15,18,21,24,27,30,33,36]}'>2:1</div>
+                                    <div class="rt-col-bet" style="grid-column:14;grid-row:2" data-bet='{"type":"column","nums":[2,5,8,11,14,17,20,23,26,29,32,35]}'>2:1</div>
+                                    <div class="rt-col-bet" style="grid-column:14;grid-row:3" data-bet='{"type":"column","nums":[1,4,7,10,13,16,19,22,25,28,31,34]}'>2:1</div>
+                                </div>
+
+                                <div class="rt-outside-bets">
+                                    <div class="rt-outside-row">
+                                        <div class="rt-outside" data-bet='{"type":"dozen","nums":[1,2,3,4,5,6,7,8,9,10,11,12]}'>1st 12</div>
+                                        <div class="rt-outside" data-bet='{"type":"dozen","nums":[13,14,15,16,17,18,19,20,21,22,23,24]}'>2nd 12</div>
+                                        <div class="rt-outside" data-bet='{"type":"dozen","nums":[25,26,27,28,29,30,31,32,33,34,35,36]}'>3rd 12</div>
+                                    </div>
+                                    <div class="rt-outside-row">
+                                        <div class="rt-outside" data-bet='{"type":"even","nums":[1,2,3,4,5,6,7,8,9,10,11,12,13,14,15,16,17,18]}'>1-18</div>
+                                        <div class="rt-outside" data-bet='{"type":"even","nums":[2,4,6,8,10,12,14,16,18,20,22,24,26,28,30,32,34,36]}'>Even</div>
+                                        <div class="rt-outside rt-red-square" data-bet='{"type":"even","nums":[1,3,5,7,9,12,14,16,18,19,21,23,25,27,30,32,34,36]}'>Red</div>
+                                        <div class="rt-outside rt-black-square" data-bet='{"type":"even","nums":[2,4,6,8,10,11,13,15,17,20,22,24,26,28,29,31,33,35]}'>Black</div>
+                                        <div class="rt-outside" data-bet='{"type":"even","nums":[1,3,5,7,9,11,13,15,17,19,21,23,25,27,29,31,33,35]}'>Odd</div>
+                                        <div class="rt-outside" data-bet='{"type":"even","nums":[19,20,21,22,23,24,25,26,27,28,29,30,31,32,33,34,35,36]}'>19-36</div>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+
+                        <div class="roulette-controls">
+                            <div class="chip-selector">
+                                <button class="chip chip-1" data-val="0.01">0.01</button>
+                                <button class="chip chip-5" data-val="0.05">0.05</button>
+                                <button class="chip chip-10" data-val="0.10">0.10</button>
+                                <button class="chip chip-50 active" data-val="0.50">0.50</button>
+                                <button class="chip chip-100" data-val="1.00">1.00</button>
+                                <button class="chip chip-500" data-val="5.00">5.00</button>
+                            </div>
+                            <div class="control-buttons">
+                                <button class="btn btn-rt-clear" id="rtClear">Clear Bets</button>
+                                <button class="btn btn-rt-spin" id="rtSpin">
+                                    <span class="btn-shimmer"></span>
+                                    Spin
+                                </button>
+                                <button class="btn btn-rt-double" id="rtDouble">Double</button>
+                            </div>
+                        </div>
+
+                        <div class="roulette-history" id="rouletteHistory">
+                            <span class="rh-label">History</span>
+                            <div class="rh-numbers" id="rhNumbers"></div>
+                        </div>
                     </div>
                 </div>
 
@@ -986,5 +1192,6 @@
     <div class="toast-container" id="toastContainer"></div>
 
     <script src="js/main.js"></script>
+    <script src="js/roulette.js"></script>
 </body>
 </html>

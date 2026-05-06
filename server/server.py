@@ -7,6 +7,7 @@ import os
 import sys
 import io
 import base64
+import random
 from datetime import datetime, timedelta
 from functools import wraps
 
@@ -318,6 +319,87 @@ def request_withdrawal():
         'wallet_address': wallet_address,
         'status': 'pending',
         'message': 'Withdrawal request submitted. Processing typically takes 15-60 minutes.'
+    })
+
+
+# ═══════════════════════════════════════════════
+# ROULETTE
+# ═══════════════════════════════════════════════
+
+# European roulette payout table
+ROULETTE_PAYOUTS = {
+    'straight': 35,
+    'split': 17,
+    'street': 11,
+    'corner': 8,
+    'sixline': 5,
+    'column': 2,
+    'dozen': 2,
+    'even': 1,
+}
+
+RED_NUMS = {1,3,5,7,9,12,14,16,18,19,21,23,25,27,30,32,34,36}
+
+def calc_roulette_winnings(result, bets):
+    """Calculate total payout for a list of bets given the result number."""
+    total_win = 0.0
+    for bet in bets:
+        bet_type = bet.get('type', 'straight')
+        nums = bet.get('nums', [])
+        amount = float(bet.get('amount', 0))
+        if result in nums:
+            payout = ROULETTE_PAYOUTS.get(bet_type, 0)
+            total_win += amount * (payout + 1)  # stake + winnings
+    return total_win
+
+@app.route('/api/roulette/spin', methods=['POST'])
+@token_required
+def roulette_spin():
+    data = request.get_json() or {}
+    user_id = request.user['id']
+    currency = data.get('currency', 'BTC').upper()
+    bets = data.get('bets', [])
+    total_bet = sum(float(b.get('amount', 0)) for b in bets)
+
+    if currency not in db.CURRENCIES:
+        return jsonify({'error': 'Invalid currency'}), 400
+    if total_bet <= 0:
+        return jsonify({'error': 'Bet amount must be greater than 0'}), 400
+    if len(bets) == 0:
+        return jsonify({'error': 'No bets placed'}), 400
+
+    balances = db.get_balances(user_id)
+    current = balances.get(currency, 0.0)
+    if total_bet > current:
+        return jsonify({'error': f'Insufficient {currency} balance'}), 400
+
+    # Deduct bet
+    db.update_balance(user_id, currency, -total_bet)
+    db.create_transaction(user_id, 'roulette_bet', currency, -total_bet, 'roulette_bet', status='complete')
+
+    # Generate result
+    result = random.randint(0, 36)
+
+    # Calculate winnings
+    total_win = calc_roulette_winnings(result, bets)
+    profit = total_win - total_bet
+
+    # Credit winnings if any
+    if total_win > 0:
+        db.update_balance(user_id, currency, total_win)
+        db.create_transaction(user_id, 'roulette_win', currency, total_win, f'win_{result}', status='complete')
+
+    new_balance = db.get_balances(user_id).get(currency, 0.0)
+
+    return jsonify({
+        'success': True,
+        'result': result,
+        'color': 'green' if result == 0 else ('red' if result in RED_NUMS else 'black'),
+        'total_bet': total_bet,
+        'total_win': total_win,
+        'profit': profit,
+        'new_balance': new_balance,
+        'currency': currency
     })
 
 

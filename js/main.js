@@ -754,9 +754,612 @@
         initGameGrids();
         initMobileNav();
         initHeroParallax();
+        initBlackjack();
         updateAuthUI();
         loadTransactions();
     }
+
+    // ═══════════════════════════════════════════════
+    // BLACKJACK GAME v2
+    // ═══════════════════════════════════════════════
+    let bjDeck = [];
+    let bjDealerHand = [];
+    let bjPlayerHand = [];
+    let bjPlayerSplitHand = null;
+    let bjActiveHand = 'main';
+    let bjMainDone = false;
+    let bjSplitDone = false;
+    let bjBet = 10;
+    let bjOriginalBet = 0;
+    let bjHistory = [];
+    let bjSoundOn = true;
+    let bjClientSeed = generateSeed();
+    let bjServerSeed = generateSeed();
+    let bjNonce = 0;
+    let bjInProgress = false;
+
+    const SUITS = ['♠','♥','♣','♦'];
+    const RANKS = ['A','2','3','4','5','6','7','8','9','10','J','Q','K'];
+
+    function generateSeed() {
+        return Array.from({length:32},()=>'0123456789abcdef'[Math.floor(Math.random()*16)]).join('');
+    }
+
+    function bjPlaySound(type) {
+        if (!bjSoundOn) return;
+        try {
+            const ctx = new (window.AudioContext || window.webkitAudioContext)();
+            const osc = ctx.createOscillator();
+            const gain = ctx.createGain();
+            osc.connect(gain);
+            gain.connect(ctx.destination);
+            if (type === 'deal') {
+                osc.type = 'sine';
+                osc.frequency.setValueAtTime(900, ctx.currentTime);
+                osc.frequency.exponentialRampToValueAtTime(350, ctx.currentTime + 0.1);
+                gain.gain.setValueAtTime(0.06, ctx.currentTime);
+                gain.gain.exponentialRampToValueAtTime(0.001, ctx.currentTime + 0.1);
+                osc.start(ctx.currentTime);
+                osc.stop(ctx.currentTime + 0.1);
+            } else if (type === 'win') {
+                [523,659,784,1047].forEach((f,i) => {
+                    const o = ctx.createOscillator();
+                    const g = ctx.createGain();
+                    o.connect(g); g.connect(ctx.destination);
+                    o.type = 'sine'; o.frequency.value = f;
+                    g.gain.setValueAtTime(0.06, ctx.currentTime + i*0.08);
+                    g.gain.exponentialRampToValueAtTime(0.001, ctx.currentTime + i*0.08 + 0.25);
+                    o.start(ctx.currentTime + i*0.08);
+                    o.stop(ctx.currentTime + i*0.08 + 0.25);
+                });
+            } else if (type === 'loss') {
+                osc.type = 'sawtooth';
+                osc.frequency.setValueAtTime(280, ctx.currentTime);
+                osc.frequency.exponentialRampToValueAtTime(80, ctx.currentTime + 0.35);
+                gain.gain.setValueAtTime(0.04, ctx.currentTime);
+                gain.gain.exponentialRampToValueAtTime(0.001, ctx.currentTime + 0.35);
+                osc.start(ctx.currentTime);
+                osc.stop(ctx.currentTime + 0.35);
+            } else if (type === 'chip') {
+                osc.type = 'sine';
+                osc.frequency.setValueAtTime(1400, ctx.currentTime);
+                gain.gain.setValueAtTime(0.03, ctx.currentTime);
+                gain.gain.exponentialRampToValueAtTime(0.001, ctx.currentTime + 0.03);
+                osc.start(ctx.currentTime);
+                osc.stop(ctx.currentTime + 0.03);
+            }
+        } catch(e) {}
+    }
+
+    function getBjUsdRate(curr) {
+        const info = userBalances[curr];
+        if (!info || !info.crypto) return 0;
+        return info.usd / info.crypto;
+    }
+
+    function getBjSelectedCurrency() {
+        if (selectedDisplayCurrency !== 'total') return selectedDisplayCurrency;
+        for (const c of CURRENCIES) {
+            if ((userBalances[c]?.crypto || 0) > 0) return c;
+        }
+        return 'BTC';
+    }
+
+    function getBjBalanceUsd() {
+        if (!getToken() || !Object.keys(userBalances).length) return 1000;
+        let total = 0;
+        CURRENCIES.forEach(c => { total += userBalances[c]?.usd || 0; });
+        return total;
+    }
+
+    function bjDeductBet(usdAmount) {
+        if (!getToken()) return true; // Guest demo play
+        const curr = getBjSelectedCurrency();
+        const rate = getBjUsdRate(curr);
+        if (rate <= 0) return false;
+        const cryptoAmt = usdAmount / rate;
+        if (!userBalances[curr]) userBalances[curr] = { crypto: 0, usd: 0 };
+        userBalances[curr].crypto = Math.max(0, (userBalances[curr].crypto || 0) - cryptoAmt);
+        userBalances[curr].usd = Math.max(0, (userBalances[curr].usd || 0) - usdAmount);
+        renderBalances();
+        return true;
+    }
+
+    function bjAddWinnings(usdAmount) {
+        if (!getToken()) return; // Guest demo play
+        const curr = getBjSelectedCurrency();
+        const rate = getBjUsdRate(curr);
+        if (rate <= 0) return;
+        const cryptoAmt = usdAmount / rate;
+        if (!userBalances[curr]) userBalances[curr] = { crypto: 0, usd: 0 };
+        userBalances[curr].crypto = (userBalances[curr].crypto || 0) + cryptoAmt;
+        userBalances[curr].usd = (userBalances[curr].usd || 0) + usdAmount;
+        renderBalances();
+    }
+
+    function createDeck() {
+        const deck = [];
+        for (let d = 0; d < 6; d++) {
+            for (const suit of SUITS) {
+                for (const rank of RANKS) {
+                    deck.push({ suit, rank, value: cardValue(rank) });
+                }
+            }
+        }
+        return shuffle(deck);
+    }
+
+    function cardValue(rank) {
+        if (rank === 'A') return 11;
+        if (['J','Q','K'].includes(rank)) return 10;
+        return parseInt(rank);
+    }
+
+    function shuffle(deck) {
+        for (let i = deck.length - 1; i > 0; i--) {
+            const j = Math.floor(Math.random() * (i + 1));
+            [deck[i], deck[j]] = [deck[j], deck[i]];
+        }
+        return deck;
+    }
+
+    function handValue(hand) {
+        let total = 0, aces = 0;
+        for (const card of hand) { total += card.value; if (card.rank === 'A') aces++; }
+        while (total > 21 && aces > 0) { total -= 10; aces--; }
+        return total;
+    }
+
+    function isBlackjack(hand) {
+        return hand.length === 2 && handValue(hand) === 21;
+    }
+
+    function dealCard() {
+        if (bjDeck.length < 20) {
+            bjDeck = createDeck();
+            $('#bjDeckIcon')?.classList.add('shuffling');
+            setTimeout(() => $('#bjDeckIcon')?.classList.remove('shuffling'), 400);
+        }
+        return bjDeck.pop();
+    }
+
+    function renderCard(card, hidden = false, delay = 0) {
+        const isRed = card.suit === '♥' || card.suit === '♦';
+        if (hidden) {
+            return `<div class="bj-card hidden dealing" style="animation-delay:${delay}s"></div>`;
+        }
+        return `
+            <div class="bj-card ${isRed ? 'red' : 'black'} dealing" style="animation-delay:${delay}s">
+                <div class="bj-card-corner top-left">
+                    <div class="bj-card-rank">${card.rank}</div>
+                    <div class="bj-card-suit">${card.suit}</div>
+                </div>
+                <div class="bj-card-suit" style="font-size:1.8rem;">${card.suit}</div>
+                <div class="bj-card-corner bottom-right">
+                    <div class="bj-card-rank">${card.rank}</div>
+                    <div class="bj-card-suit">${card.suit}</div>
+                </div>
+            </div>
+        `;
+    }
+
+    function renderHand(container, hand, hideFirst = false, baseDelay = 0) {
+        if (!container) return;
+        container.innerHTML = hand.map((c, i) => renderCard(c, hideFirst && i === 0, baseDelay + i * 0.12)).join('');
+    }
+
+    function updateHandValues() {
+        const dv = $('#dealerValue');
+        const pv = $('#playerValue');
+        if (dv) {
+            const val = handValue(bjDealerHand);
+            dv.textContent = bjDealerHand.length ? (bjDealerHand[0]?.hidden ? '?' : val) : '';
+            dv.classList.toggle('bust', val > 21);
+        }
+        if (pv) {
+            const hand = bjActiveHand === 'split' && bjPlayerSplitHand ? bjPlayerSplitHand : bjPlayerHand;
+            const val = handValue(hand);
+            pv.textContent = hand.length ? val : '';
+            pv.classList.toggle('bust', val > 21);
+        }
+    }
+
+    function showResult(msg, type) {
+        const overlay = $('#bjResultOverlay');
+        if (!overlay) return;
+        overlay.innerHTML = `<div class="bj-result-text ${type}">${msg}</div>`;
+        overlay.classList.remove('hidden');
+        setTimeout(() => overlay.classList.add('hidden'), 2200);
+    }
+
+    function addHistory(result, bet, payout) {
+        bjHistory.unshift({ result, bet, payout, time: new Date().toLocaleTimeString([], {hour:'2-digit',minute:'2-digit'}) });
+        if (bjHistory.length > 50) bjHistory.pop();
+        renderHistory();
+    }
+
+    function renderHistory() {
+        const el = $('#bjHistoryList');
+        if (!el) return;
+        el.innerHTML = bjHistory.map(h => {
+            const profit = h.payout - h.bet;
+            const profitStr = profit >= 0 ? `+$${profit.toFixed(2)}` : `-$${Math.abs(profit).toFixed(2)}`;
+            const profitColor = profit > 0 ? 'var(--neon)' : profit < 0 ? 'var(--hot)' : 'var(--text-secondary)';
+            return `
+                <div class="bj-history-item ${h.result}">
+                    <span class="bj-h-res">${h.result}</span>
+                    <span class="bj-h-amt" style="color:${profitColor}">${profitStr}</span>
+                </div>
+            `;
+        }).join('');
+    }
+
+    function setActionsEnabled(enabled) {
+        ['bjHitBtn','bjStandBtn','bjSplitBtn','bjDoubleBtn'].forEach(id => {
+            const btn = $('#' + id);
+            if (btn) btn.disabled = !enabled;
+        });
+    }
+
+    function updateActionButtons() {
+        const hand = bjActiveHand === 'split' && bjPlayerSplitHand ? bjPlayerSplitHand : bjPlayerHand;
+
+        const hitBtn = $('#bjHitBtn');
+        const standBtn = $('#bjStandBtn');
+        const doubleBtn = $('#bjDoubleBtn');
+        const splitBtn = $('#bjSplitBtn');
+
+        if (hitBtn) hitBtn.disabled = false;
+        if (standBtn) standBtn.disabled = false;
+
+        const canDouble = hand.length === 2 && bjActiveHand === 'main';
+        if (doubleBtn) doubleBtn.disabled = !canDouble;
+
+        const canSplit = hand.length === 2 && hand[0].rank === hand[1].rank && !bjPlayerSplitHand;
+        if (splitBtn) splitBtn.disabled = !canSplit;
+    }
+
+    function updateBetInput() {
+        const input = $('#bjBetInput');
+        if (input) input.value = bjBet.toFixed(2);
+    }
+
+    function startRound() {
+        const input = $('#bjBetInput');
+        bjBet = parseFloat(input?.value) || 10;
+        if (bjBet < 0.01) bjBet = 0.01;
+
+        const balance = getBjBalanceUsd();
+        if (bjBet > balance) {
+            bjBet = Math.max(0.01, balance);
+            updateBetInput();
+        }
+        if (bjBet <= 0 || balance <= 0) {
+            showResult('Insufficient Balance', 'loss');
+            return;
+        }
+
+        // Deduct bet from real balance
+        if (!bjDeductBet(bjBet)) {
+            showResult('Balance Error', 'loss');
+            return;
+        }
+
+        bjPlayerHand = [];
+        bjPlayerSplitHand = null;
+        bjDealerHand = [];
+        bjActiveHand = 'main';
+        bjMainDone = false;
+        bjSplitDone = false;
+        bjOriginalBet = bjBet;
+        bjNonce++;
+        bjInProgress = true;
+
+        $('#bjResultOverlay')?.classList.add('hidden');
+        $('#bjRulesBanner')?.classList.add('hidden');
+
+        if (!bjDeck.length) bjDeck = createDeck();
+
+        // Deal with staggered animation
+        bjPlayerHand.push(dealCard());
+        bjDealerHand.push({ ...dealCard(), hidden: true });
+        bjPlayerHand.push(dealCard());
+        bjDealerHand.push(dealCard());
+
+        renderHand($('#playerCards'), bjPlayerHand, false, 0);
+        renderHand($('#dealerCards'), bjDealerHand, true, 0.06);
+        updateHandValues();
+        bjPlaySound('deal');
+
+        $('#fairServer').textContent = bjServerSeed.slice(0,16) + '...';
+        $('#fairClient').textContent = bjClientSeed.slice(0,16) + '...';
+        $('#fairNonce').textContent = bjNonce;
+
+        // UI updates
+        $('#bjDealBtn')?.classList.add('hidden');
+        $('#bjRebetBtn')?.classList.add('hidden');
+        setActionsEnabled(true);
+
+        if (isBlackjack(bjPlayerHand) || isBlackjack(bjDealerHand)) {
+            setActionsEnabled(false);
+            setTimeout(finishRound, 600);
+            return;
+        }
+
+        updateActionButtons();
+    }
+
+    function hit() {
+        const hand = bjActiveHand === 'split' && bjPlayerSplitHand ? bjPlayerSplitHand : bjPlayerHand;
+        hand.push(dealCard());
+        bjPlaySound('deal');
+        renderHand($('#playerCards'), bjActiveHand === 'split' && bjPlayerSplitHand ? bjPlayerSplitHand : bjPlayerHand);
+        updateHandValues();
+
+        if (handValue(hand) > 21) {
+            if (bjActiveHand === 'main') bjMainDone = true;
+            else bjSplitDone = true;
+
+            if (bjActiveHand === 'main' && bjPlayerSplitHand && !bjSplitDone) {
+                bjActiveHand = 'split';
+                updateActionButtons();
+                renderHand($('#playerCards'), bjPlayerSplitHand);
+                updateHandValues();
+            } else if (bjActiveHand === 'split' && bjPlayerSplitHand && !bjMainDone) {
+                bjActiveHand = 'main';
+                updateActionButtons();
+                renderHand($('#playerCards'), bjPlayerHand);
+                updateHandValues();
+            } else {
+                setActionsEnabled(false);
+                setTimeout(dealerTurn, 400);
+            }
+        } else {
+            updateActionButtons();
+        }
+    }
+
+    function stand() {
+        if (bjActiveHand === 'main') bjMainDone = true;
+        else bjSplitDone = true;
+
+        if (bjActiveHand === 'main' && bjPlayerSplitHand && !bjSplitDone) {
+            bjActiveHand = 'split';
+            updateActionButtons();
+            renderHand($('#playerCards'), bjPlayerSplitHand);
+            updateHandValues();
+        } else {
+            setActionsEnabled(false);
+            dealerTurn();
+        }
+    }
+
+    function doubleDown() {
+        const hand = bjActiveHand === 'split' && bjPlayerSplitHand ? bjPlayerSplitHand : bjPlayerHand;
+
+        // Deduct extra bet for double
+        if (!bjDeductBet(bjOriginalBet)) {
+            showResult('Insufficient Balance', 'loss');
+            return;
+        }
+        bjBet += bjOriginalBet;
+
+        hand.push(dealCard());
+        bjPlaySound('deal');
+        renderHand($('#playerCards'), bjActiveHand === 'split' && bjPlayerSplitHand ? bjPlayerSplitHand : bjPlayerHand);
+        updateHandValues();
+
+        if (bjActiveHand === 'main') bjMainDone = true;
+        else bjSplitDone = true;
+
+        if (handValue(hand) > 21) {
+            if (bjActiveHand === 'main' && bjPlayerSplitHand && !bjSplitDone) {
+                bjActiveHand = 'split';
+                renderHand($('#playerCards'), bjPlayerSplitHand);
+                updateHandValues();
+            } else if (bjActiveHand === 'split' && bjPlayerSplitHand && !bjMainDone) {
+                bjActiveHand = 'main';
+                renderHand($('#playerCards'), bjPlayerHand);
+                updateHandValues();
+            } else {
+                setActionsEnabled(false);
+                setTimeout(dealerTurn, 400);
+            }
+        } else {
+            if (bjActiveHand === 'main' && bjPlayerSplitHand && !bjSplitDone) {
+                bjActiveHand = 'split';
+                updateActionButtons();
+                renderHand($('#playerCards'), bjPlayerSplitHand);
+                updateHandValues();
+            } else {
+                setActionsEnabled(false);
+                setTimeout(dealerTurn, 400);
+            }
+        }
+    }
+
+    function split() {
+        if (bjPlayerHand.length !== 2 || bjPlayerHand[0].rank !== bjPlayerHand[1].rank) return;
+
+        // Deduct extra bet for split hand
+        if (!bjDeductBet(bjOriginalBet)) {
+            showResult('Insufficient Balance', 'loss');
+            return;
+        }
+        bjBet += bjOriginalBet;
+
+        bjPlayerSplitHand = [bjPlayerHand.pop()];
+        bjPlayerHand.push(dealCard());
+        bjPlayerSplitHand.push(dealCard());
+        bjPlaySound('deal');
+        renderHand($('#playerCards'), bjPlayerHand);
+        updateHandValues();
+        updateActionButtons();
+    }
+
+    function dealerTurn() {
+        // Reveal hidden card
+        if (bjDealerHand[0]) bjDealerHand[0].hidden = false;
+        renderHand($('#dealerCards'), bjDealerHand);
+        updateHandValues();
+        bjPlaySound('deal');
+
+        let draws = 0;
+        const drawInterval = setInterval(() => {
+            const val = handValue(bjDealerHand);
+            if (val < 17) {
+                bjDealerHand.push(dealCard());
+                renderHand($('#dealerCards'), bjDealerHand);
+                updateHandValues();
+                bjPlaySound('deal');
+                draws++;
+            } else {
+                clearInterval(drawInterval);
+                finishRound();
+            }
+        }, 550);
+    }
+
+    function finishRound() {
+        const dVal = handValue(bjDealerHand);
+        const dBJ = isBlackjack(bjDealerHand);
+
+        function evaluate(hand, bet) {
+            const pVal = handValue(hand);
+            const pBJ = isBlackjack(hand);
+            if (pBJ && dBJ) return { result: 'push', payout: bet };
+            if (pBJ) return { result: 'blackjack', payout: bet * 2.5 };
+            if (dBJ) return { result: 'loss', payout: 0 };
+            if (pVal > 21) return { result: 'loss', payout: 0 };
+            if (dVal > 21) return { result: 'win', payout: bet * 2 };
+            if (pVal > dVal) return { result: 'win', payout: bet * 2 };
+            if (pVal < dVal) return { result: 'loss', payout: 0 };
+            return { result: 'push', payout: bet };
+        }
+
+        let totalPayout = 0;
+        let msgs = [];
+
+        const mainEval = evaluate(bjPlayerHand, bjOriginalBet);
+        totalPayout += mainEval.payout;
+        msgs.push(mainEval.result);
+
+        if (bjPlayerSplitHand) {
+            const splitEval = evaluate(bjPlayerSplitHand, bjOriginalBet);
+            totalPayout += splitEval.payout;
+            msgs.push(splitEval.result);
+        }
+
+        // Add winnings to real balance
+        if (totalPayout > 0) {
+            bjAddWinnings(totalPayout);
+        }
+
+        let overall, msg;
+        if (!bjPlayerSplitHand) {
+            overall = mainEval.result;
+            const pVal = handValue(bjPlayerHand);
+            if (overall === 'blackjack') msg = 'BLACKJACK!';
+            else if (overall === 'win') msg = dVal > 21 ? 'Dealer Bust!' : 'You Win!';
+            else if (overall === 'loss') msg = pVal > 21 ? 'Bust' : 'You Lose';
+            else msg = 'Push';
+        } else {
+            const wins = msgs.filter(m => m === 'win' || m === 'blackjack').length;
+            const losses = msgs.filter(m => m === 'loss').length;
+            if (wins === 2) { overall = 'win'; msg = 'Both Hands Win!'; }
+            else if (losses === 2) { overall = 'loss'; msg = 'Both Hands Lose'; }
+            else { overall = 'push'; msg = 'Split Result'; }
+        }
+
+        addHistory(overall, bjBet, totalPayout);
+        showResult(msg, overall);
+        bjPlaySound(overall === 'win' || overall === 'blackjack' ? 'win' : overall === 'loss' ? 'loss' : '');
+
+        // Show Play Again, hide Deal
+        $('#bjDealBtn')?.classList.add('hidden');
+        $('#bjRebetBtn')?.classList.remove('hidden');
+        setActionsEnabled(false);
+        $('#bjRulesBanner')?.classList.remove('hidden');
+        bjInProgress = false;
+    }
+
+    function initBlackjack() {
+        bjDeck = createDeck();
+        renderHistory();
+        updateBetInput();
+        setActionsEnabled(false);
+
+        // Amount input
+        $('#bjBetInput')?.addEventListener('change', () => {
+            bjBet = parseFloat($('#bjBetInput').value) || 10;
+            if (bjBet < 0.01) bjBet = 0.01;
+            updateBetInput();
+        });
+
+        // Modifiers
+        $$('.bj-amount-mod').forEach(btn => {
+            btn.addEventListener('click', () => {
+                const mod = btn.dataset.mod;
+                let val = parseFloat($('#bjBetInput').value) || 10;
+                if (mod === '0.5') val *= 0.5;
+                else if (mod === '2') val *= 2;
+                else if (mod === 'min') val = 0.01;
+                else if (mod === 'max') val = getBjBalanceUsd();
+                bjBet = Math.max(0.01, Math.min(getBjBalanceUsd(), val));
+                updateBetInput();
+                bjPlaySound('chip');
+            });
+        });
+
+        // Play / Rebet
+        $('#bjDealBtn')?.addEventListener('click', startRound);
+        $('#bjRebetBtn')?.addEventListener('click', startRound);
+
+        // Actions
+        $('#bjHitBtn')?.addEventListener('click', hit);
+        $('#bjStandBtn')?.addEventListener('click', stand);
+        $('#bjDoubleBtn')?.addEventListener('click', doubleDown);
+        $('#bjSplitBtn')?.addEventListener('click', split);
+
+        // Sound toggle
+        $('#bjSoundToggle')?.addEventListener('click', () => {
+            bjSoundOn = !bjSoundOn;
+            $('#bjSoundToggle').textContent = bjSoundOn ? '🔊' : '🔇';
+        });
+
+        // Fullscreen
+        $('#bjFullscreenBtn')?.addEventListener('click', () => {
+            const el = $('.view[data-view="blackjack"]');
+            if (!document.fullscreenElement) el?.requestFullscreen?.();
+            else document.exitFullscreen?.();
+        });
+
+        // Fair modal
+        $('#bjFairBtn')?.addEventListener('click', () => $('#bjFairModal')?.classList.remove('hidden'));
+        $('#bjFairClose')?.addEventListener('click', () => $('#bjFairModal')?.classList.add('hidden'));
+        $('#bjFairModal .bj-modal-overlay')?.addEventListener('click', () => $('#bjFairModal')?.classList.add('hidden'));
+
+        // Clear history
+        $('#bjClearHistory')?.addEventListener('click', () => {
+            bjHistory = [];
+            renderHistory();
+        });
+
+        // Follow button
+        $('#bjFollowBtn')?.addEventListener('click', function() {
+            this.classList.toggle('following');
+            this.textContent = this.classList.contains('following') ? '♥ Following' : '♡ Follow';
+        });
+    }
+
+    // Expose for roulette.js
+    window.api = api;
+    window.getToken = getToken;
+    window.showToast = showToast;
+    window.showAuthModal = (type) => {
+        if (type === 'login') openModal('#loginModal');
+        else if (type === 'signup') openModal('#signupModal');
+    };
 
     if (document.readyState === 'loading') {
         document.addEventListener('DOMContentLoaded', init);
