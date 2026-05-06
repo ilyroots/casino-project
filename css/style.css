@@ -3578,3 +3578,253 @@ body:hover .cursor-glow {
         grid-template-columns: repeat(2, 1fr);
     }
 }
+
+
+/* ═══════════════════════════════════════════════
+   CRYPTO SYSTEM STYLES
+   ═══════════════════════════════════════════════ */
+
+/* Currency Toggle */
+.btn-currency-toggle {
+    background: var(--deep);
+    color: var(--neon);
+    border: 1px solid var(--neon-dim);
+    font-family: var(--font-mono);
+    font-size: 0.7rem;
+    font-weight: 700;
+    letter-spacing: 0.05em;
+    padding: 0.4rem 0.7rem;
+    border-radius: 8px;
+    cursor: pointer;
+    transition: all 0.2s ease;
+    text-transform: uppercase;
+}
+.btn-currency-toggle:hover {
+    background: var(--neon-faint);
+    box-shadow: 0 0 12px var(--neon-faint);
+}
+
+/* Balance Display */
+.balance-display {
+    display: flex;
+    align-items: center;
+    gap: 0.5rem;
+    flex-wrap: wrap;
+    padding: 0.35rem 0.75rem;
+    background: var(--deep);
+    border: 1px solid var(--border-subtle);
+    border-radius: 10px;
+    max-width: 400px;
+    overflow-x: auto;
+    scrollbar-width: none;
+}
+.balance-display::-webkit-scrollbar {
+    display: none;
+}
+.balance-item-crypto {
+    display: flex;
+    flex-direction: column;
+    align-items: flex-start;
+    gap: 0.05rem;
+    padding: 0 0.4rem;
+    border-right: 1px solid var(--border-subtle);
+    line-height: 1.2;
+}
+.balance-item-crypto:last-child {
+    border-right: none;
+}
+.bal-curr {
+    font-family: var(--font-mono);
+    font-size: 0.6rem;
+    font-weight: 600;
+    letter-spacing: 0.05em;
+    color: var(--text-tertiary);
+}
+.bal-amt {
+    font-family: var(--font-mono);
+    font-size: 0.8rem;
+    font-weight: 600;
+    color: var(--text-primary);
+    white-space: nowrap;
+}
+.balance-guest {
+    font-size: 0.78rem;
+    color: var(--text-tertiary);
+    padding: 0.2rem 0;
+}
+
+/* Wallet Actions Bar */
+.wallet-actions-bar {
+    display: flex;
+    gap: 0.75rem;
+    margin-bottom: 1.5rem;
+}
+.btn-wallet-deposit,
+.btn-wallet-withdraw {
+    flex: 1;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: 0.5rem;
+    padding: 0.8rem 1.25rem;
+    border-radius: 12px;
+    font-family: var(--font-display);
+    font-size: 0.95rem;
+    font-weight: 700;
+    letter-spacing: 0.02em;
+    border: none;
+    cursor: pointer;
+    transition: all 0.25s ease;
+}
+.btn-wallet-deposit {
+    background: var(--neon);
+    color: var(--void);
+}
+.btn-wallet-deposit:hover {
+    box-shadow: 0 0 30px var(--neon-glow);
+    transform: translateY(-2px);
+}
+.btn-wallet-withdraw {
+    background: var(--deep);
+    color: var(--text-primary);
+    border: 1px solid var(--border-subtle);
+}
+.btn-wallet-withdraw:hover {
+    border-color: var(--neon-dim);
+    color: var(--neon);
+    background: var(--neon-faint);
+}
+
+/* Form Select */
+.form-select {
+    padding: 0.65rem 0.9rem;
+    background: var(--deep);
+    border: 1px solid var(--border-subtle);
+    border-radius: 10px;
+    color: var(--text-primary);
+    font-family: var(--font-body);
+    font-size: 0.88rem;
+    transition: all 0.25s ease;
+    outline: none;
+    width: 100%;
+    cursor: pointer;
+    appearance: none;
+    background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='12' height='12' viewBox='0 0 24 24' fill='none' stroke='%237a8fa8' stroke-width='3'%3E%3Cpolyline points='6 9 12 15 18 9' stroke-linecap='round' stroke-linejoin='round'/%3E%3C/svg%3E");
+    background-repeat: no-repeat;
+    background-position: right 0.9rem center;
+    padding-right: 2.5rem;
+}
+.form-select:focus {
+    border-color: var(--neon-dim);
+    box-shadow: 0 0 0 3px var(--neon-faint);
+}
+.form-select option {
+    background: var(--surface);
+    color: var(--text-primary);
+}
+
+/* QR Display */
+.qr-display {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: 1rem;
+    padding: 1.25rem;
+    background: var(--deep);
+    border: 1px solid var(--border-subtle);
+    border-radius: 14px;
+    margin-bottom: 0.5rem;
+}
+.qr-image {
+    width: 180px;
+    height: 180px;
+    border-radius: 12px;
+    background: white;
+    padding: 0.5rem;
+    object-fit: contain;
+}
+.qr-address-wrap {
+    width: 100%;
+    display: flex;
+    flex-direction: column;
+    gap: 0.35rem;
+}
+.qr-address-wrap label {
+    font-size: 0.72rem;
+    font-weight: 600;
+    color: var(--text-tertiary);
+    text-transform: uppercase;
+    letter-spacing: 0.05em;
+}
+.qr-address-box {
+    display: flex;
+    gap: 0.4rem;
+}
+.qr-address-box input {
+    flex: 1;
+    padding: 0.55rem 0.75rem;
+    background: var(--surface);
+    border: 1px solid var(--border-subtle);
+    border-radius: 8px;
+    color: var(--text-primary);
+    font-family: var(--font-mono);
+    font-size: 0.78rem;
+    outline: none;
+}
+.btn-copy {
+    padding: 0.5rem 0.7rem;
+    background: var(--surface);
+    border: 1px solid var(--border-subtle);
+    border-radius: 8px;
+    cursor: pointer;
+    font-size: 0.9rem;
+    transition: all 0.2s ease;
+}
+.btn-copy:hover {
+    border-color: var(--neon-dim);
+    background: var(--neon-faint);
+}
+
+/* Transaction Status */
+.tx-status {
+    display: inline-block;
+    padding: 0.2rem 0.5rem;
+    border-radius: 6px;
+    font-family: var(--font-mono);
+    font-size: 0.65rem;
+    font-weight: 700;
+    letter-spacing: 0.05em;
+    text-transform: uppercase;
+}
+.tx-status.pending {
+    background: rgba(251, 191, 36, 0.12);
+    color: #fbbf24;
+}
+.tx-status.completed {
+    background: var(--neon-faint);
+    color: var(--neon);
+}
+.tx-status.failed {
+    background: rgba(255, 56, 100, 0.12);
+    color: var(--hot);
+}
+.tx-empty {
+    text-align: center;
+    padding: 2rem;
+    color: var(--text-tertiary);
+    font-size: 0.85rem;
+}
+
+/* ─── Responsive Crypto ─── */
+@media (max-width: 640px) {
+    .balance-display {
+        max-width: 200px;
+    }
+    .wallet-actions-bar {
+        flex-direction: column;
+    }
+    .qr-image {
+        width: 140px;
+        height: 140px;
+    }
+}
