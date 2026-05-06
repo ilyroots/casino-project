@@ -539,6 +539,395 @@
                     </div>
                 </div>
 
+                <!-- DICE GAME VIEW -->
+                <div class="view" data-view="dice">
+                    <div class="game-layout">
+                        <div class="game-panel">
+                            <div class="game-panel-inner">
+                                <div class="game-amount-section">
+                                    <label class="game-amount-label">Amount</label>
+                                    <div class="game-amount-input-row">
+                                        <div class="game-amount-input-wrap">
+                                            <input type="number" class="game-amount-input" id="diceBetInput" value="10" step="0.01" min="0.01">
+                                            <span class="game-amount-curr">$</span>
+                                        </div>
+                                        <button class="game-amount-mod" data-game="dice" data-mod="0.5">½</button>
+                                        <button class="game-amount-mod" data-game="dice" data-mod="2">2×</button>
+                                    </div>
+                                </div>
+                                <div class="game-control-group">
+                                    <label class="game-control-label">Roll Under</label>
+                                    <div class="dice-slider-wrap">
+                                        <input type="range" class="dice-slider" id="diceSlider" min="2" max="98" value="50">
+                                        <div class="dice-slider-val" id="diceSliderVal">50</div>
+                                    </div>
+                                    <div class="dice-multiplier" id="diceMultiplier">2.00×</div>
+                                </div>
+                                <div class="game-control-group">
+                                    <label class="game-control-label">Win Chance</label>
+                                    <div class="dice-chance" id="diceChance">49.00%</div>
+                                </div>
+                                <button class="game-play-btn" id="dicePlayBtn">Roll Dice</button>
+                                <div class="game-history-area">
+                                    <div class="game-history-header"><span>History</span><button class="game-history-clear" data-game="dice">Clear</button></div>
+                                    <div class="game-history-list" id="diceHistoryList"></div>
+                                </div>
+                            </div>
+                        </div>
+                        <div class="game-stage" id="diceStage">
+                            <div class="dice-visual">
+                                <div class="dice-target">Target: <span id="diceTargetDisp">Under 50</span></div>
+                                <div class="dice-result" id="diceResult">--</div>
+                                <div class="dice-bar">
+                                    <div class="dice-bar-fill" id="diceBarFill"></div>
+                                    <div class="dice-bar-marker" id="diceBarMarker"></div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                    <div class="game-bar">
+                        <div class="game-bar-left"><button class="game-bar-btn" id="diceSoundToggle">🔊</button></div>
+                        <div class="game-bar-center">DONK</div>
+                        <div class="game-bar-right"><button class="game-bar-btn game-fairness-btn" id="diceFairBtn">Fairness</button></div>
+                    </div>
+                    <div class="game-footer">
+                        <div class="game-footer-left"><div class="game-footer-icon">◈</div><div class="game-footer-meta"><div class="game-footer-name">Donk Originals</div><div class="game-footer-players"><span class="game-live-dot"></span><span id="dicePlayerCount">3.1K</span> Playing</div></div></div>
+                        <div class="game-footer-right"><button class="game-follow-btn" data-game="dice">♡ Follow</button></div>
+                    </div>
+                    <div class="game-modal hidden" id="diceFairModal"><div class="game-modal-overlay"></div><div class="game-modal-content"><h3>Provably Fair</h3><p>Each roll uses a SHA-256 hash chain.</p><div class="game-fair-row"><span>Server Seed</span><code id="diceFairServer">---</code></div><div class="game-fair-row"><span>Client Seed</span><code id="diceFairClient">---</code></div><div class="game-fair-row"><span>Nonce</span><code id="diceFairNonce">---</code></div><button class="game-modal-close" id="diceFairClose">Close</button></div></div>
+                </div>
+
+                <!-- LIMBO GAME VIEW -->
+                <div class="view" data-view="limbo">
+                    <div class="game-layout">
+                        <div class="game-panel">
+                            <div class="game-panel-inner">
+                                <div class="game-amount-section">
+                                    <label class="game-amount-label">Amount</label>
+                                    <div class="game-amount-input-row">
+                                        <div class="game-amount-input-wrap">
+                                            <input type="number" class="game-amount-input" id="limboBetInput" value="10" step="0.01" min="0.01">
+                                            <span class="game-amount-curr">$</span>
+                                        </div>
+                                        <button class="game-amount-mod" data-game="limbo" data-mod="0.5">½</button>
+                                        <button class="game-amount-mod" data-game="limbo" data-mod="2">2×</button>
+                                    </div>
+                                </div>
+                                <div class="game-control-group">
+                                    <label class="game-control-label">Target Multiplier</label>
+                                    <div class="limbo-input-wrap">
+                                        <input type="number" class="limbo-target-input" id="limboTarget" value="2.00" step="0.01" min="1.01">
+                                        <span class="limbo-target-x">×</span>
+                                    </div>
+                                    <div class="limbo-win-chance" id="limboWinChance">49.50%</div>
+                                </div>
+                                <button class="game-play-btn" id="limboPlayBtn">Launch</button>
+                                <div class="game-history-area">
+                                    <div class="game-history-header"><span>History</span><button class="game-history-clear" data-game="limbo">Clear</button></div>
+                                    <div class="game-history-list" id="limboHistoryList"></div>
+                                </div>
+                            </div>
+                        </div>
+                        <div class="game-stage" id="limboStage">
+                            <div class="limbo-visual">
+                                <canvas id="limboCanvas" width="500" height="300"></canvas>
+                                <div class="limbo-result-overlay" id="limboResultOverlay"></div>
+                            </div>
+                        </div>
+                    </div>
+                    <div class="game-bar">
+                        <div class="game-bar-left"><button class="game-bar-btn" id="limboSoundToggle">🔊</button></div>
+                        <div class="game-bar-center">DONK</div>
+                        <div class="game-bar-right"><button class="game-bar-btn game-fairness-btn" id="limboFairBtn">Fairness</button></div>
+                    </div>
+                    <div class="game-footer">
+                        <div class="game-footer-left"><div class="game-footer-icon">◈</div><div class="game-footer-meta"><div class="game-footer-name">Donk Originals</div><div class="game-footer-players"><span class="game-live-dot"></span><span id="limboPlayerCount">2.8K</span> Playing</div></div></div>
+                        <div class="game-footer-right"><button class="game-follow-btn" data-game="limbo">♡ Follow</button></div>
+                    </div>
+                    <div class="game-modal hidden" id="limboFairModal"><div class="game-modal-overlay"></div><div class="game-modal-content"><h3>Provably Fair</h3><p>Each launch uses a SHA-256 hash chain.</p><div class="game-fair-row"><span>Server Seed</span><code id="limboFairServer">---</code></div><div class="game-fair-row"><span>Client Seed</span><code id="limboFairClient">---</code></div><div class="game-fair-row"><span>Nonce</span><code id="limboFairNonce">---</code></div><button class="game-modal-close" id="limboFairClose">Close</button></div></div>
+                </div>
+
+                <!-- MINES GAME VIEW -->
+                <div class="view" data-view="mines">
+                    <div class="game-layout">
+                        <div class="game-panel">
+                            <div class="game-panel-inner">
+                                <div class="game-amount-section">
+                                    <label class="game-amount-label">Amount</label>
+                                    <div class="game-amount-input-row">
+                                        <div class="game-amount-input-wrap">
+                                            <input type="number" class="game-amount-input" id="minesBetInput" value="10" step="0.01" min="0.01">
+                                            <span class="game-amount-curr">$</span>
+                                        </div>
+                                        <button class="game-amount-mod" data-game="mines" data-mod="0.5">½</button>
+                                        <button class="game-amount-mod" data-game="mines" data-mod="2">2×</button>
+                                    </div>
+                                </div>
+                                <div class="game-control-group">
+                                    <label class="game-control-label">Mines</label>
+                                    <div class="mines-select-wrap">
+                                        <select class="mines-select" id="minesCount">
+                                            <option value="1">1 Mine</option>
+                                            <option value="3" selected>3 Mines</option>
+                                            <option value="5">5 Mines</option>
+                                            <option value="10">10 Mines</option>
+                                            <option value="15">15 Mines</option>
+                                            <option value="20">20 Mines</option>
+                                        </select>
+                                    </div>
+                                </div>
+                                <div class="game-control-group">
+                                    <label class="game-control-label">Next Multiplier</label>
+                                    <div class="mines-multiplier" id="minesNextMult">1.29×</div>
+                                </div>
+                                <button class="game-play-btn" id="minesPlayBtn">Start Game</button>
+                                <button class="game-play-btn hidden" id="minesCashoutBtn" style="background:var(--neon);color:#000;">Cash Out <span id="minesCashoutVal">0.00</span></button>
+                                <div class="game-history-area">
+                                    <div class="game-history-header"><span>History</span><button class="game-history-clear" data-game="mines">Clear</button></div>
+                                    <div class="game-history-list" id="minesHistoryList"></div>
+                                </div>
+                            </div>
+                        </div>
+                        <div class="game-stage" id="minesStage">
+                            <div class="mines-grid" id="minesGrid"></div>
+                        </div>
+                    </div>
+                    <div class="game-bar">
+                        <div class="game-bar-left"><button class="game-bar-btn" id="minesSoundToggle">🔊</button></div>
+                        <div class="game-bar-center">DONK</div>
+                        <div class="game-bar-right"><button class="game-bar-btn game-fairness-btn" id="minesFairBtn">Fairness</button></div>
+                    </div>
+                    <div class="game-footer">
+                        <div class="game-footer-left"><div class="game-footer-icon">◈</div><div class="game-footer-meta"><div class="game-footer-name">Donk Originals</div><div class="game-footer-players"><span class="game-live-dot"></span><span id="minesPlayerCount">4.2K</span> Playing</div></div></div>
+                        <div class="game-footer-right"><button class="game-follow-btn" data-game="mines">♡ Follow</button></div>
+                    </div>
+                    <div class="game-modal hidden" id="minesFairModal"><div class="game-modal-overlay"></div><div class="game-modal-content"><h3>Provably Fair</h3><p>Each board uses a SHA-256 hash chain.</p><div class="game-fair-row"><span>Server Seed</span><code id="minesFairServer">---</code></div><div class="game-fair-row"><span>Client Seed</span><code id="minesFairClient">---</code></div><div class="game-fair-row"><span>Nonce</span><code id="minesFairNonce">---</code></div><button class="game-modal-close" id="minesFairClose">Close</button></div></div>
+                </div>
+
+                <!-- CRASH GAME VIEW -->
+                <div class="view" data-view="crash">
+                    <div class="game-layout">
+                        <div class="game-panel">
+                            <div class="game-panel-inner">
+                                <div class="game-amount-section">
+                                    <label class="game-amount-label">Amount</label>
+                                    <div class="game-amount-input-row">
+                                        <div class="game-amount-input-wrap">
+                                            <input type="number" class="game-amount-input" id="crashBetInput" value="10" step="0.01" min="0.01">
+                                            <span class="game-amount-curr">$</span>
+                                        </div>
+                                        <button class="game-amount-mod" data-game="crash" data-mod="0.5">½</button>
+                                        <button class="game-amount-mod" data-game="crash" data-mod="2">2×</button>
+                                    </div>
+                                </div>
+                                <div class="game-control-group">
+                                    <label class="game-control-label">Auto Cashout</label>
+                                    <div class="crash-input-wrap">
+                                        <input type="number" class="crash-target-input" id="crashAutoCashout" value="2.00" step="0.01" min="1.01">
+                                        <span class="crash-target-x">×</span>
+                                    </div>
+                                </div>
+                                <button class="game-play-btn" id="crashPlayBtn">Place Bet</button>
+                                <button class="game-play-btn hidden" id="crashCashoutBtn" style="background:var(--neon);color:#000;">Cash Out</button>
+                                <div class="game-history-area">
+                                    <div class="game-history-header"><span>History</span><button class="game-history-clear" data-game="crash">Clear</button></div>
+                                    <div class="game-history-list" id="crashHistoryList"></div>
+                                </div>
+                            </div>
+                        </div>
+                        <div class="game-stage" id="crashStage">
+                            <div class="crash-visual">
+                                <canvas id="crashCanvas" width="600" height="350"></canvas>
+                                <div class="crash-multiplier" id="crashMultiplier">1.00×</div>
+                                <div class="crash-status" id="crashStatus">Place your bet</div>
+                            </div>
+                            <div class="crash-history-strip" id="crashHistoryStrip"></div>
+                        </div>
+                    </div>
+                    <div class="game-bar">
+                        <div class="game-bar-left"><button class="game-bar-btn" id="crashSoundToggle">🔊</button></div>
+                        <div class="game-bar-center">DONK</div>
+                        <div class="game-bar-right"><button class="game-bar-btn game-fairness-btn" id="crashFairBtn">Fairness</button></div>
+                    </div>
+                    <div class="game-footer">
+                        <div class="game-footer-left"><div class="game-footer-icon">◈</div><div class="game-footer-meta"><div class="game-footer-name">Donk Originals</div><div class="game-footer-players"><span class="game-live-dot"></span><span id="crashPlayerCount">5.7K</span> Playing</div></div></div>
+                        <div class="game-footer-right"><button class="game-follow-btn" data-game="crash">♡ Follow</button></div>
+                    </div>
+                    <div class="game-modal hidden" id="crashFairModal"><div class="game-modal-overlay"></div><div class="game-modal-content"><h3>Provably Fair</h3><p>Each round uses a SHA-256 hash chain.</p><div class="game-fair-row"><span>Server Seed</span><code id="crashFairServer">---</code></div><div class="game-fair-row"><span>Client Seed</span><code id="crashFairClient">---</code></div><div class="game-fair-row"><span>Nonce</span><code id="crashFairNonce">---</code></div><button class="game-modal-close" id="crashFairClose">Close</button></div></div>
+                </div>
+
+                <!-- PLINKO GAME VIEW -->
+                <div class="view" data-view="plinko">
+                    <div class="game-layout">
+                        <div class="game-panel">
+                            <div class="game-panel-inner">
+                                <div class="game-amount-section">
+                                    <label class="game-amount-label">Amount</label>
+                                    <div class="game-amount-input-row">
+                                        <div class="game-amount-input-wrap">
+                                            <input type="number" class="game-amount-input" id="plinkoBetInput" value="10" step="0.01" min="0.01">
+                                            <span class="game-amount-curr">$</span>
+                                        </div>
+                                        <button class="game-amount-mod" data-game="plinko" data-mod="0.5">½</button>
+                                        <button class="game-amount-mod" data-game="plinko" data-mod="2">2×</button>
+                                    </div>
+                                </div>
+                                <div class="game-control-group">
+                                    <label class="game-control-label">Risk</label>
+                                    <div class="plinko-risk-btns">
+                                        <button class="plinko-risk-btn active" data-risk="low">Low</button>
+                                        <button class="plinko-risk-btn" data-risk="medium">Medium</button>
+                                        <button class="plinko-risk-btn" data-risk="high">High</button>
+                                    </div>
+                                </div>
+                                <div class="game-control-group">
+                                    <label class="game-control-label">Rows</label>
+                                    <div class="plinko-rows-wrap">
+                                        <input type="range" class="plinko-rows-slider" id="plinkoRows" min="8" max="16" value="12">
+                                        <div class="plinko-rows-val" id="plinkoRowsVal">12</div>
+                                    </div>
+                                </div>
+                                <div class="game-control-group">
+                                    <label class="game-control-label">Balls</label>
+                                    <div class="plinko-balls-wrap">
+                                        <button class="plinko-ball-btn" data-balls="1">1</button>
+                                        <button class="plinko-ball-btn active" data-balls="5">5</button>
+                                        <button class="plinko-ball-btn" data-balls="10">10</button>
+                                    </div>
+                                </div>
+                                <button class="game-play-btn" id="plinkoPlayBtn">Drop</button>
+                                <div class="game-history-area">
+                                    <div class="game-history-header"><span>History</span><button class="game-history-clear" data-game="plinko">Clear</button></div>
+                                    <div class="game-history-list" id="plinkoHistoryList"></div>
+                                </div>
+                            </div>
+                        </div>
+                        <div class="game-stage" id="plinkoStage">
+                            <div class="plinko-visual">
+                                <canvas id="plinkoCanvas" width="460" height="520"></canvas>
+                                <div class="plinko-buckets" id="plinkoBuckets"></div>
+                            </div>
+                        </div>
+                    </div>
+                    <div class="game-bar">
+                        <div class="game-bar-left"><button class="game-bar-btn" id="plinkoSoundToggle">🔊</button></div>
+                        <div class="game-bar-center">DONK</div>
+                        <div class="game-bar-right"><button class="game-bar-btn game-fairness-btn" id="plinkoFairBtn">Fairness</button></div>
+                    </div>
+                    <div class="game-footer">
+                        <div class="game-footer-left"><div class="game-footer-icon">◈</div><div class="game-footer-meta"><div class="game-footer-name">Donk Originals</div><div class="game-footer-players"><span class="game-live-dot"></span><span id="plinkoPlayerCount">3.5K</span> Playing</div></div></div>
+                        <div class="game-footer-right"><button class="game-follow-btn" data-game="plinko">♡ Follow</button></div>
+                    </div>
+                    <div class="game-modal hidden" id="plinkoFairModal"><div class="game-modal-overlay"></div><div class="game-modal-content"><h3>Provably Fair</h3><p>Each drop uses a SHA-256 hash chain.</p><div class="game-fair-row"><span>Server Seed</span><code id="plinkoFairServer">---</code></div><div class="game-fair-row"><span>Client Seed</span><code id="plinkoFairClient">---</code></div><div class="game-fair-row"><span>Nonce</span><code id="plinkoFairNonce">---</code></div><button class="game-modal-close" id="plinkoFairClose">Close</button></div></div>
+                </div>
+
+                <!-- KENO GAME VIEW -->
+                <div class="view" data-view="keno">
+                    <div class="game-layout">
+                        <div class="game-panel">
+                            <div class="game-panel-inner">
+                                <div class="game-amount-section">
+                                    <label class="game-amount-label">Amount</label>
+                                    <div class="game-amount-input-row">
+                                        <div class="game-amount-input-wrap">
+                                            <input type="number" class="game-amount-input" id="kenoBetInput" value="10" step="0.01" min="0.01">
+                                            <span class="game-amount-curr">$</span>
+                                        </div>
+                                        <button class="game-amount-mod" data-game="keno" data-mod="0.5">½</button>
+                                        <button class="game-amount-mod" data-game="keno" data-mod="2">2×</button>
+                                    </div>
+                                </div>
+                                <div class="game-control-group">
+                                    <label class="game-control-label">Auto Pick</label>
+                                    <div class="keno-auto-btns">
+                                        <button class="keno-auto-btn" data-pick="5">5</button>
+                                        <button class="keno-auto-btn" data-pick="10">10</button>
+                                        <button class="keno-auto-btn" data-clear>Clear</button>
+                                    </div>
+                                </div>
+                                <div class="game-control-group">
+                                    <label class="game-control-label">Picks: <span id="kenoPickCount">0</span>/10</label>
+                                    <div class="keno-multiplier" id="kenoMultiplier">--</div>
+                                </div>
+                                <button class="game-play-btn" id="kenoPlayBtn">Draw</button>
+                                <div class="game-history-area">
+                                    <div class="game-history-header"><span>History</span><button class="game-history-clear" data-game="keno">Clear</button></div>
+                                    <div class="game-history-list" id="kenoHistoryList"></div>
+                                </div>
+                            </div>
+                        </div>
+                        <div class="game-stage" id="kenoStage">
+                            <div class="keno-grid" id="kenoGrid"></div>
+                            <div class="keno-drawn" id="kenoDrawn"></div>
+                        </div>
+                    </div>
+                    <div class="game-bar">
+                        <div class="game-bar-left"><button class="game-bar-btn" id="kenoSoundToggle">🔊</button></div>
+                        <div class="game-bar-center">DONK</div>
+                        <div class="game-bar-right"><button class="game-bar-btn game-fairness-btn" id="kenoFairBtn">Fairness</button></div>
+                    </div>
+                    <div class="game-footer">
+                        <div class="game-footer-left"><div class="game-footer-icon">◈</div><div class="game-footer-meta"><div class="game-footer-name">Donk Originals</div><div class="game-footer-players"><span class="game-live-dot"></span><span id="kenoPlayerCount">1.9K</span> Playing</div></div></div>
+                        <div class="game-footer-right"><button class="game-follow-btn" data-game="keno">♡ Follow</button></div>
+                    </div>
+                    <div class="game-modal hidden" id="kenoFairModal"><div class="game-modal-overlay"></div><div class="game-modal-content"><h3>Provably Fair</h3><p>Each draw uses a SHA-256 hash chain.</p><div class="game-fair-row"><span>Server Seed</span><code id="kenoFairServer">---</code></div><div class="game-fair-row"><span>Client Seed</span><code id="kenoFairClient">---</code></div><div class="game-fair-row"><span>Nonce</span><code id="kenoFairNonce">---</code></div><button class="game-modal-close" id="kenoFairClose">Close</button></div></div>
+                </div>
+
+                <!-- HILO GAME VIEW -->
+                <div class="view" data-view="hilo">
+                    <div class="game-layout">
+                        <div class="game-panel">
+                            <div class="game-panel-inner">
+                                <div class="game-amount-section">
+                                    <label class="game-amount-label">Amount</label>
+                                    <div class="game-amount-input-row">
+                                        <div class="game-amount-input-wrap">
+                                            <input type="number" class="game-amount-input" id="hiloBetInput" value="10" step="0.01" min="0.01">
+                                            <span class="game-amount-curr">$</span>
+                                        </div>
+                                        <button class="game-amount-mod" data-game="hilo" data-mod="0.5">½</button>
+                                        <button class="game-amount-mod" data-game="hilo" data-mod="2">2×</button>
+                                    </div>
+                                </div>
+                                <div class="game-control-group">
+                                    <label class="game-control-label">Current Multiplier</label>
+                                    <div class="hilo-multiplier" id="hiloCurrentMult">1.00×</div>
+                                </div>
+                                <div class="game-control-group">
+                                    <label class="game-control-label">Next Multiplier</label>
+                                    <div class="hilo-next-mult" id="hiloNextMult">1.96× / 2.04×</div>
+                                </div>
+                                <div class="hilo-action-grid">
+                                    <button class="hilo-guess-btn" id="hiloHigherBtn">Higher ↗</button>
+                                    <button class="hilo-guess-btn" id="hiloLowerBtn">Lower ↘</button>
+                                </div>
+                                <button class="game-play-btn hidden" id="hiloStartBtn">Start</button>
+                                <button class="game-play-btn" id="hiloCashoutBtn" style="background:var(--neon);color:#000;">Cash Out</button>
+                                <div class="game-history-area">
+                                    <div class="game-history-header"><span>History</span><button class="game-history-clear" data-game="hilo">Clear</button></div>
+                                    <div class="game-history-list" id="hiloHistoryList"></div>
+                                </div>
+                            </div>
+                        </div>
+                        <div class="game-stage" id="hiloStage">
+                            <div class="hilo-visual">
+                                <div class="hilo-card-area" id="hiloCardArea"></div>
+                                <div class="hilo-streak" id="hiloStreak"></div>
+                            </div>
+                        </div>
+                    </div>
+                    <div class="game-bar">
+                        <div class="game-bar-left"><button class="game-bar-btn" id="hiloSoundToggle">🔊</button></div>
+                        <div class="game-bar-center">DONK</div>
+                        <div class="game-bar-right"><button class="game-bar-btn game-fairness-btn" id="hiloFairBtn">Fairness</button></div>
+                    </div>
+                    <div class="game-footer">
+                        <div class="game-footer-left"><div class="game-footer-icon">◈</div><div class="game-footer-meta"><div class="game-footer-name">Donk Originals</div><div class="game-footer-players"><span class="game-live-dot"></span><span id="hiloPlayerCount">2.3K</span> Playing</div></div></div>
+                        <div class="game-footer-right"><button class="game-follow-btn" data-game="hilo">♡ Follow</button></div>
+                    </div>
+                    <div class="game-modal hidden" id="hiloFairModal"><div class="game-modal-overlay"></div><div class="game-modal-content"><h3>Provably Fair</h3><p>Each card uses a SHA-256 hash chain.</p><div class="game-fair-row"><span>Server Seed</span><code id="hiloFairServer">---</code></div><div class="game-fair-row"><span>Client Seed</span><code id="hiloFairClient">---</code></div><div class="game-fair-row"><span>Nonce</span><code id="hiloFairNonce">---</code></div><button class="game-modal-close" id="hiloFairClose">Close</button></div></div>
+                </div>
+
                 <!-- ROULETTE GAME VIEW -->
                 <div class="view" data-view="roulette">
                     <div class="roulette-game">
@@ -656,14 +1045,79 @@
                 </div>
 
                 <!-- POKER VIEW -->
+                <!-- POKER GAME VIEW -->
                 <div class="view" data-view="poker">
-                    <div class="view-hero small">
-                        <div class="view-hero-icon">♦️</div>
-                        <h1 class="view-hero-title">Poker</h1>
-                        <p class="view-hero-desc">Texas Hold'em, Omaha, Stud, and video poker. Test your skills against the house or other players.</p>
-                    </div>
-                    <div class="content-scroll-inner">
-                        <div class="games-grid large" data-render="poker-full"></div>
+                    <div class="poker-game">
+                        <div class="poker-header">
+                            <div class="poker-title">
+                                <span class="pt-icon">♠</span>
+                                <div>
+                                    <h2>Ultimate Texas Hold'em</h2>
+                                    <span class="pt-sub">Heads-Up vs Dealer • Blind Pay Table • RTP 97.8%</span>
+                                </div>
+                            </div>
+                            <div class="poker-balance">
+                                <span class="pb-label">Balance</span>
+                                <span class="pb-value" id="pokerBalance">--</span>
+                            </div>
+                        </div>
+
+                        <div class="poker-table" id="pokerTable">
+                            <!-- Felt background pattern via CSS -->
+                            <div class="poker-felt"></div>
+
+                            <!-- Dealer area -->
+                            <div class="poker-dealer-area">
+                                <div class="poker-avatar dealer-avatar">D</div>
+                                <div class="poker-hand-label">Dealer</div>
+                                <div class="poker-cards" id="pokerDealerCards"></div>
+                            </div>
+
+                            <!-- Community cards -->
+                            <div class="poker-community-area">
+                                <div class="poker-cards community" id="pokerCommunity"></div>
+                            </div>
+
+                            <!-- Pot -->
+                            <div class="poker-pot-area">
+                                <div class="poker-pot-label">Pot</div>
+                                <div class="poker-pot-value" id="pokerPot">0.00</div>
+                            </div>
+
+                            <!-- Player area -->
+                            <div class="poker-player-area">
+                                <div class="poker-cards" id="pokerPlayerCards"></div>
+                                <div class="poker-hand-label">You</div>
+                                <div class="poker-avatar player-avatar">Y</div>
+                            </div>
+                        </div>
+
+                        <div class="poker-status" id="pokerStatus">Place your bet and click Deal</div>
+
+                        <div class="poker-controls">
+                            <div class="poker-chip-selector">
+                                <button class="poker-chip chip-1" data-val="0.01">0.01</button>
+                                <button class="poker-chip chip-5" data-val="0.05">0.05</button>
+                                <button class="poker-chip chip-10" data-val="0.10">0.10</button>
+                                <button class="poker-chip chip-50 active" data-val="0.50">0.50</button>
+                                <button class="poker-chip chip-100" data-val="1.00">1.00</button>
+                                <button class="poker-chip chip-500" data-val="5.00">5.00</button>
+                            </div>
+                            <div class="poker-action-buttons">
+                                <button class="btn btn-poker-clear" id="pokerClear">Clear</button>
+                                <button class="btn btn-poker-deal" id="pokerDeal">
+                                    <span class="btn-shimmer"></span>Deal
+                                </button>
+                                <button class="btn btn-poker-check" id="pokerCheck">Check</button>
+                                <button class="btn btn-poker-bet" id="pokerBet">Bet</button>
+                                <button class="btn btn-poker-fold" id="pokerFold">Fold</button>
+                            </div>
+                        </div>
+
+                        <div class="poker-history-panel">
+                            <span class="ph-title">Hand History</span>
+                            <div class="ph-list" id="pokerHistory"></div>
+                        </div>
                     </div>
                 </div>
 
@@ -1193,5 +1647,6 @@
 
     <script src="js/main.js"></script>
     <script src="js/roulette.js"></script>
+    <script src="js/poker.js"></script>
 </body>
 </html>

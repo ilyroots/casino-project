@@ -404,6 +404,40 @@ def roulette_spin():
 
 
 # ═══════════════════════════════════════════════
+# POKER
+# ═══════════════════════════════════════════════
+
+@app.route('/api/poker/bet', methods=['POST'])
+@token_required
+def poker_bet():
+    data = request.get_json() or {}
+    user_id = request.user['id']
+    currency = data.get('currency', 'BTC').upper()
+    amount = float(data.get('amount', 0))
+    action = data.get('action', 'deduct')  # 'deduct' or 'credit'
+
+    if currency not in db.CURRENCIES:
+        return jsonify({'error': 'Invalid currency'}), 400
+    if amount <= 0:
+        return jsonify({'error': 'Amount must be greater than 0'}), 400
+
+    balances = db.get_balances(user_id)
+    current = balances.get(currency, 0.0)
+
+    if action == 'deduct':
+        if amount > current:
+            return jsonify({'error': f'Insufficient {currency} balance'}), 400
+        db.update_balance(user_id, currency, -amount)
+        db.create_transaction(user_id, 'poker_bet', currency, -amount, 'poker_bet', status='complete')
+    elif action == 'credit':
+        db.update_balance(user_id, currency, amount)
+        db.create_transaction(user_id, 'poker_win', currency, amount, 'poker_win', status='complete')
+
+    new_balance = db.get_balances(user_id).get(currency, 0.0)
+    return jsonify({'success': True, 'new_balance': new_balance, 'currency': currency})
+
+
+# ═══════════════════════════════════════════════
 # TRANSACTION HISTORY
 # ═══════════════════════════════════════════════
 

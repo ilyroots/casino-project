@@ -687,8 +687,15 @@
 
     function renderGameGrid(container, games) {
         if (!container || !games) return;
-        container.innerHTML = games.map((g, i) => `
-            <div class="game-card" style="animation: cardFadeIn 0.5s var(--ease-out-expo) ${i * 0.04}s both">
+        const viewMap = {
+            'Dice': 'dice', 'Plinko': 'plinko', 'Mines': 'mines',
+            'Crash': 'crash', 'Limbo': 'limbo', 'Keno': 'keno', 'Hilo': 'hilo'
+        };
+        container.innerHTML = games.map((g, i) => {
+            const view = viewMap[g.name];
+            const clickable = view ? `data-nav="${view}" style="cursor:pointer;"` : '';
+            return `
+            <div class="game-card" ${clickable} style="animation: cardFadeIn 0.5s var(--ease-out-expo) ${i * 0.04}s both">
                 <div class="game-thumb">${g.emoji}</div>
                 <div class="game-card-info">
                     <div class="game-card-title">${g.name}</div>
@@ -696,7 +703,7 @@
                 </div>
                 <div class="holographic-shimmer"></div>
             </div>
-        `).join('');
+        `}).join('');
     }
 
     function initGameGrids() {
