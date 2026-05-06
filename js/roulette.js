@@ -253,7 +253,6 @@
                 bets: betPayload
             })
         })
-        .then(res => res.json())
         .then(data => {
             if (data.error) {
                 showRouletteToast(data.error, 'error');
@@ -467,7 +466,6 @@
         const currency = localStorage.getItem('selectedCurrency') || 'BTC';
         if (window.api) {
             window.api('/api/balance?currency=' + currency)
-                .then(res => res.json())
                 .then(data => {
                     const bal = data.amount || 0;
                     const display = document.getElementById('rbValue');

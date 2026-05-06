@@ -31,17 +31,17 @@
     function showToast(msg, type) { if (window.showToast) window.showToast(msg, type); }
     async function apiDeduce(amt) {
         const curr = localStorage.getItem('selectedCurrency') || 'BTC';
-        const res = await window.api('/api/poker/bet', { method:'POST', body:JSON.stringify({currency:curr, amount:amt, action:'deduct'}) });
-        const d = await res.json(); if (d.error) throw new Error(d.error); return d;
+        const d = await window.api('/api/poker/bet', { method:'POST', body:JSON.stringify({currency:curr, amount:amt, action:'deduct'}) });
+        if (d.error) throw new Error(d.error); return d;
     }
     async function apiCredit(amt) {
         const curr = localStorage.getItem('selectedCurrency') || 'BTC';
-        const res = await window.api('/api/poker/bet', { method:'POST', body:JSON.stringify({currency:curr, amount:amt, action:'credit'}) });
-        const d = await res.json(); if (d.error) throw new Error(d.error); return d;
+        const d = await window.api('/api/poker/bet', { method:'POST', body:JSON.stringify({currency:curr, amount:amt, action:'credit'}) });
+        if (d.error) throw new Error(d.error); return d;
     }
     async function getBal() {
         const curr = localStorage.getItem('selectedCurrency') || 'BTC';
-        const r = await window.api('/api/balance?currency='+curr); const d = await r.json(); return d.amount||0;
+        const d = await window.api('/api/balance?currency='+curr); return d.amount||0;
     }
     function updateBalEl(id) {
         getBal().then(b => { const el = document.getElementById(id); if (el) el.textContent = formatCrypto(b)+' '+(localStorage.getItem('selectedCurrency')||'BTC').toUpperCase(); }).catch(()=>{});
