@@ -269,6 +269,17 @@
             if (!userMenu?.contains(e.target)) userMenu?.classList.remove('open');
         });
 
+        // Wallet icon button (logged in)
+        $('#walletBtnLogged')?.addEventListener('click', () => {
+            navigateTo('wallet');
+        });
+
+        // Wallet icon button (logged out)
+        $('#walletBtn')?.addEventListener('click', () => {
+            showToast('Log in to access your wallet', 'error');
+            openModal('#loginModal');
+        });
+
         $('#logoutBtn')?.addEventListener('click', () => {
             clearToken();
             updateAuthUI();
@@ -463,6 +474,7 @@
         });
         if (pushState) history.pushState({ view: viewName }, '', `#${viewName}`);
         $('#sidebarLeft')?.classList.remove('open');
+        $('#userMenu')?.classList.remove('open');
 
         // Load data for specific views
         if (viewName === 'wallet' || viewName === 'profile') {
@@ -602,6 +614,16 @@
     // GAME GRIDS (static, unchanged from before)
     // ═══════════════════════════════════════════════
     const GAME_DATA = {
+        'trending-full': [
+            { name: 'Gates of Olympus', provider: 'Pragmatic Play', emoji: '⚡' },
+            { name: 'Wanted Dead or a Wild', provider: 'Hacksaw', emoji: '🤠' },
+            { name: 'Sweet Bonanza', provider: 'Pragmatic Play', emoji: '🍬' },
+            { name: 'Zeus vs Hades', provider: 'Pragmatic Play', emoji: '⚔️' },
+            { name: 'Le Bandit', provider: 'Hacksaw', emoji: '🦝' },
+            { name: 'Big Bass Bonanza', provider: 'Pragmatic Play', emoji: '🎣' },
+            { name: 'Sugar Rush', provider: 'Pragmatic Play', emoji: '🍭' },
+            { name: 'Retro Tapes', provider: 'Push Gaming', emoji: '📼' },
+        ],
         'originals-full': [
             { name: 'Dice', provider: 'Donk Originals', emoji: '🎲' },
             { name: 'Plinko', provider: 'Donk Originals', emoji: '🔵' },
@@ -610,6 +632,46 @@
             { name: 'Limbo', provider: 'Donk Originals', emoji: '📉' },
             { name: 'Keno', provider: 'Donk Originals', emoji: '🎯' },
             { name: 'Hilo', provider: 'Donk Originals', emoji: '🃏' },
+        ],
+        'blackjack-full': [
+            { name: 'Classic Blackjack', provider: 'Evolution', emoji: '♠️' },
+            { name: 'Infinite Blackjack', provider: 'Evolution', emoji: '♣️' },
+            { name: 'Speed Blackjack', provider: 'Evolution', emoji: '⚡' },
+            { name: 'Free Bet Blackjack', provider: 'Evolution', emoji: '🎰' },
+            { name: 'Power Blackjack', provider: 'Evolution', emoji: '💪' },
+            { name: 'VIP Blackjack', provider: 'Pragmatic Play', emoji: '👑' },
+            { name: 'Quantum Blackjack', provider: 'Playtech', emoji: '⚛️' },
+            { name: 'Blackjack Party', provider: 'Evolution', emoji: '🎉' },
+        ],
+        'roulette-full': [
+            { name: 'Lightning Roulette', provider: 'Evolution', emoji: '⚡' },
+            { name: 'European Roulette', provider: 'NetEnt', emoji: '🔴' },
+            { name: 'American Roulette', provider: 'Pragmatic Play', emoji: '🔵' },
+            { name: 'Immersive Roulette', provider: 'Evolution', emoji: '🎥' },
+            { name: 'Auto Roulette', provider: 'Evolution', emoji: '🤖' },
+            { name: 'French Roulette', provider: 'NetEnt', emoji: '🥖' },
+            { name: 'XXXtreme Roulette', provider: 'Evolution', emoji: '🔥' },
+            { name: 'Mega Roulette', provider: 'Pragmatic Play', emoji: '💎' },
+        ],
+        'poker-full': [
+            { name: 'Texas Hold\'em', provider: 'Evolution', emoji: '🤠' },
+            { name: 'Omaha Poker', provider: 'Evolution', emoji: '🎯' },
+            { name: 'Three Card Poker', provider: 'Evolution', emoji: '🃏' },
+            { name: 'Caribbean Stud', provider: 'Evolution', emoji: '🏝️' },
+            { name: 'Video Poker', provider: 'NetEnt', emoji: '🎰' },
+            { name: 'Ultimate Texas Hold\'em', provider: 'Evolution', emoji: '👑' },
+            { name: 'Pai Gow Poker', provider: 'Playtech', emoji: '🀄' },
+            { name: 'Casino Hold\'em', provider: 'Evolution', emoji: '♦️' },
+        ],
+        'table-games-full': [
+            { name: 'Baccarat', provider: 'Evolution', emoji: '🏛️' },
+            { name: 'Craps', provider: 'Evolution', emoji: '🎲' },
+            { name: 'Sic Bo', provider: 'Evolution', emoji: '🎋' },
+            { name: 'Dragon Tiger', provider: 'Evolution', emoji: '🐉' },
+            { name: 'Teen Patti', provider: 'Evolution', emoji: '🇮🇳' },
+            { name: 'Andar Bahar', provider: 'Evolution', emoji: '🎯' },
+            { name: 'Red Dog', provider: 'NetEnt', emoji: '🐕' },
+            { name: 'Casino War', provider: 'Playtech', emoji: '⚔️' },
         ],
         slots: [
             { name: 'Book of Dead', provider: "Play'n GO", emoji: '📖' },
