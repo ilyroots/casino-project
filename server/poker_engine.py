@@ -542,7 +542,7 @@ class PokerTableState:
             self.hand.active_seat = next_seat
 
             # If no valid next player, try to advance street
-            if self.hand.active_seat is None or self.hand.active_seat == self.hand.active_seat:
+            if self.hand.active_seat is None:
                 # Double check if betting is actually complete
                 all_matched = all(
                     p.current_bet == self.hand.current_bet or p.status in ('folded', 'all_in', 'eliminated')
@@ -559,7 +559,8 @@ class PokerTableState:
         # Reset for new street
         for p in self.players.values():
             p.current_bet = 0.0
-            p.has_acted = False
+            if p.status == 'active':
+                p.has_acted = False
         self.hand.current_bet = 0.0
 
         if self.hand.street == 'preflop':
@@ -594,7 +595,7 @@ class PokerTableState:
         # Skip all-in players
         while self.hand.active_seat and self.players[self.hand.active_seat].status != 'active':
             next_seat = self.get_next_active_seat(self.hand.active_seat)
-            if next_seat == self.hand.active_seat:
+            if next_seat is None or next_seat == self.hand.active_seat:
                 # Everyone all-in or folded
                 self.auto_deal_remaining()
                 return
@@ -646,18 +647,28 @@ class PokerTableState:
             for s in tied:
                 pot_winners[s] = pot_winners.get(s, 0) + split
 
-        # Award winnings
-        for seat, amount in pot_winners.items():
-            self.players[seat].chips += amount
-
         winner_seats = list(pot_winners.keys())
         self.hand.winners = winner_seats
         self.add_log(f"Showdown! Winner(s): {[self.players[s].username for s in winner_seats]}")
-        self.end_hand(winner_seats)
+        self.end_hand(winner_seats, pot_winners)
 
-    def end_hand(self, winner_seats):
-        """End the current hand, check eliminations, start next if possible."""
+    def end_hand(self, winner_seats, pot_winners=None):
+        """End the current hand, award pot, check eliminations, start next if possible."""
         self.hand.street = 'complete'
+        self.hand.winners = winner_seats
+
+        # Award pot to winner(s)
+        if pot_winners:
+            for seat, amount in pot_winners.items():
+                p = self.players.get(seat)
+                if p:
+                    p.chips += amount
+        elif winner_seats and self.hand.pot > 0:
+            for seat in winner_seats:
+                p = self.players.get(seat)
+                if p:
+                    p.chips += self.hand.pot / len(winner_seats)
+            self.add_log(f"Pot awarded to {[self.players[s].username for s in winner_seats if s in self.players]}")
 
         # Check eliminations
         eliminated = []

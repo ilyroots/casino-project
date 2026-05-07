@@ -344,12 +344,16 @@
         const slider = $('#thBetSlider');
         const betVal = $('#thBetVal');
 
+        // Enable all buttons first
         foldBtn.disabled = false;
+        checkCallBtn.disabled = false;
+        betRaiseBtn.disabled = false;
+        allInBtn.disabled = false;
+
         foldBtn.textContent = 'Fold';
 
         if (callAmount <= 0) {
             checkCallBtn.textContent = 'Check';
-            checkCallBtn.disabled = false;
         } else {
             checkCallBtn.textContent = `Call ${fmtCrypto(callAmount)}`;
             checkCallBtn.disabled = p.chips < callAmount;
@@ -402,8 +406,10 @@
     // ACTIONS
     // ═══════════════════════════════════════════════
     function sendAction(action, amount = 0) {
-        if (!socket || !currentTableId) return;
+        if (!socket || !currentTableId || !isMyTurn) return;
         stopActionTimer();
+        // Disable all action buttons immediately to prevent double-clicks/race conditions
+        $$('.th-action-btn').forEach(btn => btn.disabled = true);
         socket.emit('player_action', {
             table_id: currentTableId,
             action: action,

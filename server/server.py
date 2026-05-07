@@ -6,6 +6,7 @@ Real crypto balances, deposits, withdrawals, JWT auth.
 import os
 import sys
 import io
+import json
 import base64
 import random
 from datetime import datetime, timedelta
@@ -819,6 +820,7 @@ def handle_player_action(data):
             }, room=f'table_{table_id}')
         else:
             # Auto-start next hand after 3 seconds
+            print(f'[DEBUG] hand_complete winners={hand.winners} street={hand.street}')
             socketio.emit('hand_complete', {
                 'winners': hand.winners,
                 'player_cards': {str(s): [c.to_dict() for c in p.hole_cards] for s, p in table_state.players.items() if p.status in ('active', 'all_in', 'folded')},
