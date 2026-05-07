@@ -19,8 +19,18 @@ import qrcode
 sys.path.insert(0, os.path.dirname(__file__))
 import db
 
-app = Flask(__name__, static_folder='..', static_url_path='')
+app = Flask(__name__, static_folder='..')
 CORS(app)
+
+
+@app.after_request
+def add_cache_headers(response):
+    """Prevent aggressive caching of dynamic responses."""
+    if request.path.startswith('/api/'):
+        response.headers['Cache-Control'] = 'no-store, no-cache, must-revalidate, proxy-revalidate'
+        response.headers['Pragma'] = 'no-cache'
+        response.headers['Expires'] = '0'
+    return response
 
 SECRET_KEY = os.environ.get('SECRET_KEY', 'donk-casino-secret-key-change-in-production')
 
@@ -455,14 +465,30 @@ def get_transactions():
 
 @app.route('/')
 def index():
-    return send_from_directory(app.static_folder, 'index.html')
+    response = send_from_directory(app.static_folder, 'index.html')
+    response.headers['Cache-Control'] = 'no-cache, no-store, must-revalidate'
+    return response
 
 
 @app.route('/<path:path>')
 def static_files(path):
-    return send_from_directory(app.static_folder, path)
+    # Never serve API paths as static files — return JSON 404
+    if path.startswith('api/'):
+        return jsonify({'error': 'Not found'}), 404
+    # Try to serve the file; fall back to index.html for SPA routing
+    import os as _os
+    full = _os.path.join(app.static_folder, path)
+    if _os.path.isfile(full):
+        response = send_from_directory(app.static_folder, path)
+        response.headers['Cache-Control'] = 'no-cache, no-store, must-revalidate'
+        return response
+    # SPA fallback: return index.html so hash-router can handle the view
+    response = send_from_directory(app.static_folder, 'index.html')
+    response.headers['Cache-Control'] = 'no-cache, no-store, must-revalidate'
+    return response
 
 
 if __name__ == '__main__':
-    print('DONK CASINO Server starting on http://localhost:5000')
-    app.run(host='0.0.0.0', port=5000, debug=True)
+    port = int(os.environ.get('PORT', 5000))
+    print(f'DONK CASINO Server starting on port {port}')
+    app.run(host='0.0.0.0', port=port, debug=False)
