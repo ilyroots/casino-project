@@ -526,6 +526,20 @@
                 sidebar.classList.remove('open');
             }
         });
+
+        // Mode toggle: Casino / Poker
+        $$('.mode-btn[data-mode]').forEach(btn => {
+            btn.addEventListener('click', () => {
+                $$('.mode-btn[data-mode]').forEach(b => b.classList.remove('active'));
+                btn.classList.add('active');
+                const mode = btn.dataset.mode;
+                if (mode === 'poker') {
+                    navigateTo('texas-holdem');
+                } else {
+                    navigateTo('home');
+                }
+            });
+        });
     }
 
     // ═══════════════════════════════════════════════

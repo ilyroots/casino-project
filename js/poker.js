@@ -5,10 +5,11 @@
 
 (function() {
     'use strict';
-    console.log('[POKER] poker.js loaded v2');
+    console.log('[POKER] poker.js loaded v3');
     if (!window.api) console.error('[POKER] window.api is MISSING');
     if (!window.getToken) console.error('[POKER] window.getToken is MISSING');
     if (!window.showToast) console.error('[POKER] window.showToast is MISSING');
+    else window.showToast('Poker engine loaded', 'success');
 
     // ═══════════════════════════════════════════════
     // SHARED CARD UTILITIES
@@ -136,13 +137,21 @@
         }
     }
     document.querySelectorAll('.poker-hub-card[data-poker]').forEach(card=>{
+        card.style.cursor = 'pointer';
         card.addEventListener('click',()=>{
             try {
                 const game = card.dataset.poker;
                 console.log('[POKER] clicked:', game);
-                if (['videopoker','threecard','ultimate','casino'].includes(game)) showScreen(game);
+                window.showToast && window.showToast('Opening ' + game + '...', 'info');
+                if (['videopoker','threecard','ultimate','casino'].includes(game)) {
+                    showScreen(game);
+                    window.showToast && window.showToast(game + ' loaded', 'success');
+                }
                 else showToast('Coming soon!','info');
-            } catch (e) { console.error('[POKER] click error:', e); }
+            } catch (e) {
+                console.error('[POKER] click error:', e);
+                window.showToast && window.showToast('Error: ' + e.message, 'error');
+            }
         });
     });
     document.getElementById('vpBack')?.addEventListener('click',()=>showScreen('hub'));

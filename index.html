@@ -11,6 +11,7 @@
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
     <link href="https://fonts.googleapis.com/css2?family=Tektur:wght@400;500;600;700;800;900&family=Hanken+Grotesk:wght@300;400;500;600;700;800&family=Azeret+Mono:wght@400;500;600;700&display=swap" rel="stylesheet">
     <link rel="stylesheet" href="css/style.css">
+    <script src="https://cdn.socket.io/4.5.4/socket.io.min.js"></script>
 </head>
 <body>
     <!-- Atmospheric overlays -->
@@ -1287,6 +1288,217 @@
                     </div>
                 </div>
 
+                <!-- TEXAS HOLD'EM MULTIPLAYER VIEW -->
+                <div class="view" data-view="texas-holdem">
+                    <!-- Lobby -->
+                    <div class="th-lobby" id="thLobby">
+                        <div class="view-hero small">
+                            <div class="view-hero-icon">🤠</div>
+                            <h1 class="view-hero-title">Texas Hold'em</h1>
+                            <p class="view-hero-desc">Multiplayer tournament poker. Buy in, outplay your opponents, take the pot.</p>
+                        </div>
+                        <div class="content-scroll-inner">
+                            <div class="th-lobby-actions">
+                                <button class="btn btn-hero-primary" id="thCreateTableBtn"><span class="btn-shimmer"></span>Create Table</button>
+                            </div>
+                            <div class="th-table-list" id="thTableList">
+                                <div class="th-empty">Loading tables...</div>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- Create Table Modal -->
+                    <div class="th-modal hidden" id="thCreateModal">
+                        <div class="th-modal-overlay"></div>
+                        <div class="th-modal-content">
+                            <h3>Create Poker Table</h3>
+                            <div class="th-form-group">
+                                <label>Table Name</label>
+                                <input type="text" id="thCreateName" value="Texas Hold'em" maxlength="30">
+                            </div>
+                            <div class="th-form-row">
+                                <div class="th-form-group">
+                                    <label>Small Blind</label>
+                                    <input type="number" id="thCreateSB" value="0.01" step="0.01" min="0.00000001">
+                                </div>
+                                <div class="th-form-group">
+                                    <label>Big Blind</label>
+                                    <input type="number" id="thCreateBB" value="0.02" step="0.01" min="0.00000001">
+                                </div>
+                            </div>
+                            <div class="th-form-row">
+                                <div class="th-form-group">
+                                    <label>Min Buy-in</label>
+                                    <input type="number" id="thCreateMin" value="1" step="0.1" min="0.01">
+                                </div>
+                                <div class="th-form-group">
+                                    <label>Max Buy-in</label>
+                                    <input type="number" id="thCreateMax" value="100" step="0.1" min="0.01">
+                                </div>
+                            </div>
+                            <div class="th-form-row">
+                                <div class="th-form-group">
+                                    <label>Currency</label>
+                                    <select id="thCreateCurrency">
+                                        <option value="BTC">BTC</option>
+                                        <option value="ETH">ETH</option>
+                                        <option value="SOL">SOL</option>
+                                        <option value="USDT">USDT</option>
+                                        <option value="LTC">LTC</option>
+                                    </select>
+                                </div>
+                                <div class="th-form-group">
+                                    <label>Max Players</label>
+                                    <select id="thCreateSeats">
+                                        <option value="2">2</option>
+                                        <option value="4">4</option>
+                                        <option value="6" selected>6</option>
+                                    </select>
+                                </div>
+                            </div>
+                            <div class="th-modal-btns">
+                                <button class="btn btn-modal-close" id="thCreateCancel">Cancel</button>
+                                <button class="btn btn-modal-submit" id="thCreateSubmit">Create</button>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- Buy-in Modal -->
+                    <div class="th-modal hidden" id="thBuyinModal">
+                        <div class="th-modal-overlay"></div>
+                        <div class="th-modal-content">
+                            <h3>Buy In</h3>
+                            <div class="th-form-group">
+                                <label>Amount</label>
+                                <input type="number" id="thBuyinAmount" value="10" step="0.01" min="0.01">
+                            </div>
+                            <div class="th-form-group">
+                                <label>Currency</label>
+                                <div id="thBuyinCurrencyDisplay" style="font-family:var(--font-mono);color:var(--neon);">BTC</div>
+                            </div>
+                            <div class="th-modal-btns">
+                                <button class="btn btn-modal-close" id="thBuyinCancel">Cancel</button>
+                                <button class="btn btn-modal-submit" id="thBuyinSubmit">Join Table</button>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- Poker Table -->
+                    <div class="th-table hidden" id="thTable">
+                        <div class="th-table-header">
+                            <button class="th-back-btn" id="thLeaveTable">← Leave</button>
+                            <h2 id="thTableName">Table</h2>
+                            <div class="th-table-info">
+                                <span id="thBlinds">SB: 0.01 / BB: 0.02</span>
+                                <span id="thTableCurrency">BTC</span>
+                            </div>
+                        </div>
+
+                        <div class="th-table-body">
+                            <div class="th-felt">
+                                <!-- Seats positioned absolutely -->
+                                <div class="th-seat" id="thSeat1" data-seat="1">
+                                    <div class="th-seat-cards" id="thSeat1Cards"></div>
+                                    <div class="th-seat-avatar" id="thSeat1Avatar">1</div>
+                                    <div class="th-seat-info">
+                                        <div class="th-seat-name" id="thSeat1Name">Empty</div>
+                                        <div class="th-seat-chips" id="thSeat1Chips">--</div>
+                                    </div>
+                                    <div class="th-seat-badge" id="thSeat1Badge"></div>
+                                    <div class="th-seat-timer" id="thSeat1Timer"></div>
+                                </div>
+                                <div class="th-seat" id="thSeat2" data-seat="2">
+                                    <div class="th-seat-cards" id="thSeat2Cards"></div>
+                                    <div class="th-seat-avatar" id="thSeat2Avatar">2</div>
+                                    <div class="th-seat-info">
+                                        <div class="th-seat-name" id="thSeat2Name">Empty</div>
+                                        <div class="th-seat-chips" id="thSeat2Chips">--</div>
+                                    </div>
+                                    <div class="th-seat-badge" id="thSeat2Badge"></div>
+                                    <div class="th-seat-timer" id="thSeat2Timer"></div>
+                                </div>
+                                <div class="th-seat" id="thSeat3" data-seat="3">
+                                    <div class="th-seat-cards" id="thSeat3Cards"></div>
+                                    <div class="th-seat-avatar" id="thSeat3Avatar">3</div>
+                                    <div class="th-seat-info">
+                                        <div class="th-seat-name" id="thSeat3Name">Empty</div>
+                                        <div class="th-seat-chips" id="thSeat3Chips">--</div>
+                                    </div>
+                                    <div class="th-seat-badge" id="thSeat3Badge"></div>
+                                    <div class="th-seat-timer" id="thSeat3Timer"></div>
+                                </div>
+                                <div class="th-seat" id="thSeat4" data-seat="4">
+                                    <div class="th-seat-cards" id="thSeat4Cards"></div>
+                                    <div class="th-seat-avatar" id="thSeat4Avatar">4</div>
+                                    <div class="th-seat-info">
+                                        <div class="th-seat-name" id="thSeat4Name">Empty</div>
+                                        <div class="th-seat-chips" id="thSeat4Chips">--</div>
+                                    </div>
+                                    <div class="th-seat-badge" id="thSeat4Badge"></div>
+                                    <div class="th-seat-timer" id="thSeat4Timer"></div>
+                                </div>
+                                <div class="th-seat" id="thSeat5" data-seat="5">
+                                    <div class="th-seat-cards" id="thSeat5Cards"></div>
+                                    <div class="th-seat-avatar" id="thSeat5Avatar">5</div>
+                                    <div class="th-seat-info">
+                                        <div class="th-seat-name" id="thSeat5Name">Empty</div>
+                                        <div class="th-seat-chips" id="thSeat5Chips">--</div>
+                                    </div>
+                                    <div class="th-seat-badge" id="thSeat5Badge"></div>
+                                    <div class="th-seat-timer" id="thSeat5Timer"></div>
+                                </div>
+                                <div class="th-seat" id="thSeat6" data-seat="6">
+                                    <div class="th-seat-cards" id="thSeat6Cards"></div>
+                                    <div class="th-seat-avatar" id="thSeat6Avatar">6</div>
+                                    <div class="th-seat-info">
+                                        <div class="th-seat-name" id="thSeat6Name">Empty</div>
+                                        <div class="th-seat-chips" id="thSeat6Chips">--</div>
+                                    </div>
+                                    <div class="th-seat-badge" id="thSeat6Badge"></div>
+                                    <div class="th-seat-timer" id="thSeat6Timer"></div>
+                                </div>
+
+                                <!-- Community cards & pot -->
+                                <div class="th-community-area">
+                                    <div class="th-pot" id="thPot">Pot: 0.00</div>
+                                    <div class="th-community-cards" id="thCommunityCards"></div>
+                                    <div class="th-street" id="thStreet">Waiting...</div>
+                                </div>
+                            </div>
+
+                            <!-- Action Panel -->
+                            <div class="th-action-panel" id="thActionPanel">
+                                <div class="th-action-row">
+                                    <button class="th-action-btn fold" id="thFoldBtn">Fold</button>
+                                    <button class="th-action-btn check" id="thCheckCallBtn">Check</button>
+                                    <button class="th-action-btn raise" id="thBetRaiseBtn">Bet</button>
+                                    <button class="th-action-btn allin" id="thAllInBtn">All In</button>
+                                </div>
+                                <div class="th-bet-slider-wrap" id="thBetSliderWrap">
+                                    <input type="range" class="th-bet-slider" id="thBetSlider" min="0" max="100" step="0.01" value="0">
+                                    <div class="th-bet-val" id="thBetVal">0.00</div>
+                                </div>
+                            </div>
+
+                            <!-- Game Log -->
+                            <div class="th-game-log" id="thGameLog"></div>
+                        </div>
+
+                        <div class="th-table-footer">
+                            <div class="th-footer-left">
+                                <div class="th-footer-icon">🤠</div>
+                                <div class="th-footer-meta">
+                                    <div class="th-footer-name">Texas Hold'em Tournament</div>
+                                    <div class="th-footer-players"><span class="th-live-dot"></span><span id="thPlayerCount">0</span> Players</div>
+                                </div>
+                            </div>
+                            <div class="th-footer-right">
+                                <button class="th-follow-btn" id="thStartGameBtn" style="display:none;">▶ Start Game</button>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
                 <!-- TABLE GAMES VIEW -->
                 <div class="view" data-view="table-games">
                     <div class="view-hero small">
@@ -1813,6 +2025,7 @@
 
     <script src="js/main.js?v=3"></script>
     <script src="js/roulette.js?v=3"></script>
-    <script src="js/poker.js?v=3"></script>
+    <script src="js/poker.js?v=4"></script>
+    <script src="js/texasholdem.js?v=3"></script>
 </body>
 </html>
