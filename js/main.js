@@ -6,7 +6,7 @@
 (function() {
     'use strict';
 
-    const API_URL = 'http://localhost:5000';
+    const API_URL = ''; // relative path - works on localhost and production
     const CURRENCIES = ['BTC', 'ETH', 'SOL', 'USDT', 'LTC'];
     let selectedDisplayCurrency = 'total'; // 'total', 'BTC', 'ETH', 'SOL', 'USDT', 'LTC'
     let userBalances = {};
