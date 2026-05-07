@@ -5,6 +5,10 @@
 
 (function() {
     'use strict';
+    console.log('[POKER] poker.js loaded v2');
+    if (!window.api) console.error('[POKER] window.api is MISSING');
+    if (!window.getToken) console.error('[POKER] window.getToken is MISSING');
+    if (!window.showToast) console.error('[POKER] window.showToast is MISSING');
 
     // ═══════════════════════════════════════════════
     // SHARED CARD UTILITIES
@@ -113,23 +117,32 @@
     // HUB NAVIGATION
     // ═══════════════════════════════════════════════
     function showScreen(name) {
-        document.getElementById('pokerHub').style.display = name==='hub'?'block':'none';
+        console.log('[POKER] showScreen:', name);
+        const hub = document.getElementById('pokerHub');
+        if (hub) hub.style.display = name==='hub'?'block':'none';
         ['videopoker','threecard','ultimate','casino'].forEach(s=>{
             const el = document.getElementById('pokerScreen-'+s);
             if (el) el.style.display = s===name?'block':'none';
         });
         if (name!=='hub') {
-            if (name==='videopoker') initVideoPoker();
-            if (name==='threecard') initThreeCard();
-            if (name==='ultimate') initUltimate();
-            if (name==='casino') initCasinoHoldem();
+            try {
+                if (name==='videopoker') initVideoPoker();
+                if (name==='threecard') initThreeCard();
+                if (name==='ultimate') initUltimate();
+                if (name==='casino') initCasinoHoldem();
+            } catch (e) {
+                console.error('[POKER] init error:', e);
+            }
         }
     }
     document.querySelectorAll('.poker-hub-card[data-poker]').forEach(card=>{
         card.addEventListener('click',()=>{
-            const game = card.dataset.poker;
-            if (['videopoker','threecard','ultimate','casino'].includes(game)) showScreen(game);
-            else showToast('Coming soon!','info');
+            try {
+                const game = card.dataset.poker;
+                console.log('[POKER] clicked:', game);
+                if (['videopoker','threecard','ultimate','casino'].includes(game)) showScreen(game);
+                else showToast('Coming soon!','info');
+            } catch (e) { console.error('[POKER] click error:', e); }
         });
     });
     document.getElementById('vpBack')?.addEventListener('click',()=>showScreen('hub'));
