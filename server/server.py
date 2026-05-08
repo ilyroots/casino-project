@@ -24,7 +24,7 @@ import poker_engine
 
 app = Flask(__name__, static_folder='..')
 CORS(app)
-socketio = SocketIO(app, cors_allowed_origins='*', async_mode='threading', logger=False, engineio_logger=False)
+socketio = SocketIO(app, cors_allowed_origins='*', async_mode='eventlet', logger=False, engineio_logger=False)
 
 
 @app.after_request
@@ -36,7 +36,11 @@ def add_cache_headers(response):
         response.headers['Expires'] = '0'
     return response
 
-SECRET_KEY = os.environ.get('SECRET_KEY', 'donk-casino-secret-key-change-in-production')
+SECRET_KEY = os.environ.get('SECRET_KEY')
+if not SECRET_KEY:
+    import warnings
+    warnings.warn('SECRET_KEY not set! Using fallback. Set SECRET_KEY env var for production.')
+    SECRET_KEY = 'donk-casino-secret-key-change-in-production'
 
 
 def generate_token(user_id):
@@ -820,7 +824,7 @@ def handle_player_action(data):
             }, room=f'table_{table_id}')
         else:
             # Auto-start next hand after 3 seconds
-            print(f'[DEBUG] hand_complete winners={hand.winners} street={hand.street}')
+            pass  # Hand complete, auto-starting next hand
             socketio.emit('hand_complete', {
                 'winners': hand.winners,
                 'player_cards': {str(s): [c.to_dict() for c in p.hole_cards] for s, p in table_state.players.items() if p.status in ('active', 'all_in', 'folded')},
@@ -899,6 +903,137 @@ def create_poker_table_rest():
     table_id = db.create_poker_table(name, sb, bb, min_buy, max_buy, currency, max_seats)
     poker_engine.table_manager.create_table(table_id, name, sb, bb, min_buy, max_buy, currency, max_seats)
     return jsonify({'success': True, 'table_id': table_id})
+
+
+# ═══════════════════════════════════════════════
+# HEALTH CHECK
+# ═══════════════════════════════════════════════
+
+@app.route('/health', methods=['GET'])
+def health_check():
+    return jsonify({'status': 'ok', 'service': 'donk-casino', 'timestamp': datetime.utcnow().isoformat()})
+
+
+# ═══════════════════════════════════════════════
+# ADMIN ENDPOINTS
+# ═══════════════════════════════════════════════
+
+ADMIN_KEY = os.environ.get('ADMIN_KEY', '')
+
+def admin_required(f):
+    @wraps(f)
+    def decorated(*args, **kwargs):
+        key = request.headers.get('X-Admin-Key', '')
+        if not ADMIN_KEY:
+            return jsonify({'error': 'Admin access not configured'}), 503
+        if key != ADMIN_KEY:
+            return jsonify({'error': 'Unauthorized'}), 401
+        return f(*args, **kwargs)
+    return decorated
+
+
+@app.route('/api/admin/seed', methods=['POST'])
+@admin_required
+def admin_seed():
+    """Seed test data: create test users with starting balances."""
+    data = request.get_json() or {}
+    users_to_seed = data.get('users', [
+        {'username': 'roots', 'email': 'roots@test.com', 'password': 'password123', 'balance': 10000},
+        {'username': 'test1', 'email': 'test1@test.com', 'password': 'password123', 'balance': 5000},
+        {'username': 'test2', 'email': 'test2@test.com', 'password': 'password123', 'balance': 5000},
+    ])
+
+    created = []
+    for u in users_to_seed:
+        existing = db.get_user_by_email(u['email']) or db.get_user_by_username(u['username'])
+        if existing:
+            user_id = existing['id']
+        else:
+            try:
+                user_id = db.create_user(u['username'], u['email'], u['password'])
+                created.append(u['username'])
+            except Exception as e:
+                print(f"[SEED] Failed to create {u['username']}: {e}")
+                continue
+
+        # Set balances for all currencies
+        for curr in db.CURRENCIES:
+            db.update_balance(user_id, curr, u.get('balance', 10000))
+
+    return jsonify({'success': True, 'created': created, 'message': f'Seeded {len(created)} new users, updated balances for all'})
+
+
+@app.route('/api/admin/give-balance', methods=['POST'])
+@admin_required
+def admin_give_balance():
+    """Give balance to any user by username."""
+    data = request.get_json() or {}
+    username = data.get('username', '').strip()
+    currency = data.get('currency', 'BTC').upper()
+    amount = float(data.get('amount', 0))
+
+    if not username:
+        return jsonify({'error': 'Username required'}), 400
+    if currency not in db.CURRENCIES:
+        return jsonify({'error': 'Invalid currency'}), 400
+    if amount <= 0:
+        return jsonify({'error': 'Amount must be > 0'}), 400
+
+    user = db.get_user_by_username(username)
+    if not user:
+        return jsonify({'error': 'User not found'}), 404
+
+    db.update_balance(user['id'], currency, amount)
+    db.create_transaction(user['id'], 'admin_credit', currency, amount, status='complete')
+
+    new_bal = db.get_balances(user['id']).get(currency, 0)
+    return jsonify({'success': True, 'username': username, 'currency': currency, 'amount': amount, 'new_balance': new_bal})
+
+
+@app.route('/api/admin/users', methods=['GET'])
+@admin_required
+def admin_list_users():
+    """List all users with balances."""
+    users = db.get_all_users()
+    return jsonify({'users': users})
+
+
+@app.route('/api/admin/tables', methods=['GET'])
+@admin_required
+def admin_list_tables():
+    """List all poker tables with full details."""
+    tables = db.get_all_poker_tables()
+    return jsonify({'tables': tables})
+
+
+# ═══════════════════════════════════════════════
+# STARTUP INITIALIZATION
+# ═══════════════════════════════════════════════
+
+def init_app():
+    """Initialize database tables and seed test data if needed."""
+    db.init_db()
+    print('[INIT] Database initialized')
+
+    # Auto-seed if ROOTS_SEED_BALANCE env is set (for Railway quick start)
+    seed_balance = os.environ.get('ROOTS_SEED_BALANCE', '')
+    if seed_balance:
+        try:
+            bal = float(seed_balance)
+            user = db.get_user_by_username('roots')
+            if not user:
+                user_id = db.create_user('roots', 'roots@test.com', 'password123')
+                print(f'[INIT] Created roots user (id={user_id})')
+            else:
+                user_id = user['id']
+            for curr in db.CURRENCIES:
+                db.update_balance(user_id, curr, bal)
+            print(f'[INIT] Seeded roots with {bal} per currency')
+        except Exception as e:
+            print(f'[INIT] Seed error: {e}')
+
+
+init_app()
 
 
 if __name__ == '__main__':

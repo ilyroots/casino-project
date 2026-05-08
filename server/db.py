@@ -212,6 +212,30 @@ def get_user_by_id(user_id):
     return dict(row) if row else None
 
 
+def get_user_by_username(username):
+    conn = get_db()
+    c = conn.cursor()
+    c.execute('SELECT * FROM users WHERE username = ?', (username,))
+    row = c.fetchone()
+    conn.close()
+    return dict(row) if row else None
+
+
+def get_all_users():
+    conn = get_db()
+    c = conn.cursor()
+    c.execute('SELECT id, username, email, created_at FROM users ORDER BY id')
+    users = []
+    for row in c.fetchall():
+        u = dict(row)
+        c2 = conn.cursor()
+        c2.execute('SELECT currency, amount FROM balances WHERE user_id = ?', (u['id'],))
+        u['balances'] = {r['currency']: r['amount'] for r in c2.fetchall()}
+        users.append(u)
+    conn.close()
+    return users
+
+
 def get_balances(user_id):
     conn = get_db()
     c = conn.cursor()
