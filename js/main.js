@@ -284,6 +284,7 @@
             clearToken();
             updateAuthUI();
             showToast('Logged out');
+            document.dispatchEvent(new CustomEvent('logout'));
             navigateTo('home');
         });
     }
