@@ -1199,6 +1199,10 @@ body:hover .cursor-glow {
 .game-card.has-image .game-card-info {
     display: none;
 }
+.game-card.has-image {
+    border: none;
+    background: transparent;
+}
 
 .game-thumb {
     position: absolute;
