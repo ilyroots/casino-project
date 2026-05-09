@@ -24,7 +24,7 @@ import poker_engine
 
 app = Flask(__name__, static_folder='..')
 CORS(app)
-socketio = SocketIO(app, cors_allowed_origins='*', async_mode='eventlet', logger=False, engineio_logger=False)
+socketio = SocketIO(app, cors_allowed_origins='*', async_mode='gevent', logger=False, engineio_logger=False)
 
 
 @app.after_request
