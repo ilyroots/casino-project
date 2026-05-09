@@ -1202,8 +1202,20 @@ body:hover .cursor-glow {
     justify-content: center;
     font-size: 2.5rem;
     transition: transform 0.5s var(--ease-out-expo);
+    overflow: hidden;
+    border-radius: inherit;
+}
+.game-thumb img {
+    width: 100%;
+    height: 100%;
+    object-fit: cover;
+    display: block;
+    transition: transform 0.5s var(--ease-out-expo);
 }
 .game-card:hover .game-thumb {
+    transform: scale(1.08);
+}
+.game-card:hover .game-thumb img {
     transform: scale(1.08);
 }
 
