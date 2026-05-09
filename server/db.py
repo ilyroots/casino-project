@@ -194,6 +194,14 @@ def create_user(username, email, password):
     return user_id
 
 
+def update_user_password(user_id, new_password):
+    conn = get_db()
+    c = conn.cursor()
+    c.execute('UPDATE users SET password_hash = ? WHERE id = ?', (hash_password(new_password), user_id))
+    conn.commit()
+    conn.close()
+
+
 def get_user_by_email(email):
     conn = get_db()
     c = conn.cursor()

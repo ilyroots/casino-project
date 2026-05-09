@@ -137,8 +137,20 @@
                     <td>${fmt(b.USDT)}</td>
                     <td>${fmt(b.LTC)}</td>
                     <td>${u.created_at ? u.created_at.split('T')[0] : '-'}</td>
+                    <td><button class="btn btn-sm btn-reset" data-user="${escapeHtml(u.username)}">Reset</button></td>
                 </tr>`;
             }).join('');
+
+            // Attach reset handlers
+            $$('.btn-reset', tbody).forEach(btn => {
+                btn.addEventListener('click', () => {
+                    const username = btn.dataset.user;
+                    const newPass = prompt(`Set new password for ${username}:`, 'password123');
+                    if (newPass && newPass.length >= 6) {
+                        resetPassword(username, newPass);
+                    }
+                });
+            });
         })
         .catch(() => showToast('Failed to load users', 'error'));
     }
@@ -268,6 +280,26 @@
         const div = document.createElement('div');
         div.textContent = text;
         return div.innerHTML;
+    }
+
+    function resetPassword(username, newPassword) {
+        fetch(`${API_URL}/api/admin/reset-password`, {
+            method: 'POST',
+            headers: {
+                'Content-Type': 'application/json',
+                'X-Admin-Key': adminKey
+            },
+            body: JSON.stringify({ username, new_password: newPassword })
+        })
+        .then(r => r.json())
+        .then(data => {
+            if (data.success) {
+                showToast(`Password reset for ${username}`, 'success');
+            } else {
+                showToast(data.error || 'Reset failed', 'error');
+            }
+        })
+        .catch(() => showToast('Server error', 'error'));
     }
 
     function showToast(message, type = 'success') {

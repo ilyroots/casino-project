@@ -1006,6 +1006,25 @@ def admin_list_tables():
     return jsonify({'tables': tables})
 
 
+@app.route('/api/admin/reset-password', methods=['POST'])
+@admin_required
+def admin_reset_password():
+    """Reset any user's password."""
+    data = request.get_json() or {}
+    username = data.get('username', '').strip()
+    new_password = data.get('new_password', '')
+
+    if not username or not new_password or len(new_password) < 6:
+        return jsonify({'error': 'Username and password (6+ chars) required'}), 400
+
+    user = db.get_user_by_username(username)
+    if not user:
+        return jsonify({'error': 'User not found'}), 404
+
+    db.update_user_password(user['id'], new_password)
+    return jsonify({'success': True, 'username': username, 'message': 'Password reset successfully'})
+
+
 # ═══════════════════════════════════════════════
 # STARTUP INITIALIZATION
 # ═══════════════════════════════════════════════

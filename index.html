@@ -1784,7 +1784,7 @@
                                 <div class="admin-table-wrap">
                                     <table class="admin-table" id="adminUsersTable">
                                         <thead>
-                                            <tr><th>ID</th><th>Username</th><th>Email</th><th>BTC</th><th>ETH</th><th>SOL</th><th>USDT</th><th>LTC</th><th>Created</th></tr>
+                                            <tr><th>ID</th><th>Username</th><th>Email</th><th>BTC</th><th>ETH</th><th>SOL</th><th>USDT</th><th>LTC</th><th>Created</th><th>Password</th></tr>
                                         </thead>
                                         <tbody></tbody>
                                     </table>
@@ -1843,6 +1843,10 @@
                                 </div>
                                 <div class="admin-form">
                                     <p>Create test users with starting balances instantly.</p>
+                                    <div class="seed-info" style="background:rgba(0,255,136,0.05);border:1px solid rgba(0,255,136,0.2);border-radius:8px;padding:0.75rem 1rem;margin-bottom:1rem;font-size:0.85rem;color:var(--text-secondary);">
+                                        <strong style="color:var(--neon);">Default password for all seeded accounts:</strong><br>
+                                        <code style="color:var(--text-primary);font-size:1rem;">password123</code>
+                                    </div>
                                     <button class="btn btn-primary" id="seedDataBtn">Seed Default Users (roots, test1, test2)</button>
                                     <div class="admin-result" id="seedDataResult"></div>
                                 </div>
