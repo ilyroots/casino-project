@@ -248,6 +248,9 @@ body:hover .cursor-glow {
     opacity: 0;
     pointer-events: none;
 }
+.sidebar-left.collapsed .logo-text {
+    display: none;
+}
 .sidebar-left.collapsed .sidebar-logo {
     padding: 1.25rem 0.5rem 0.75rem;
     justify-content: center;
@@ -293,6 +296,7 @@ body:hover .cursor-glow {
     display: flex;
     align-items: center;
     justify-content: center;
+    flex-shrink: 0;
 }
 .sidebar-toggle:hover {
     color: var(--neon);
