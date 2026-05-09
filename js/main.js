@@ -521,6 +521,7 @@
     function initSidebar() {
         const sidebar = $('#sidebarLeft');
         $('#sidebarToggle')?.addEventListener('click', () => sidebar.classList.toggle('collapsed'));
+        $('.sidebar-logo')?.addEventListener('click', () => navigateTo('home'));
         $('#mobileMenuBtn')?.addEventListener('click', () => sidebar.classList.toggle('open'));
         document.addEventListener('click', (e) => {
             if (window.innerWidth <= 900 && !sidebar.contains(e.target) && !$('#mobileMenuBtn')?.contains(e.target)) {
@@ -630,14 +631,10 @@
     // ═══════════════════════════════════════════════
     const GAME_DATA = {
         'trending-full': [
-            { name: 'Gates of Olympus', provider: 'Pragmatic Play', emoji: '⚡' },
-            { name: 'Wanted Dead or a Wild', provider: 'Hacksaw', emoji: '🤠' },
-            { name: 'Sweet Bonanza', provider: 'Pragmatic Play', emoji: '🍬' },
-            { name: 'Zeus vs Hades', provider: 'Pragmatic Play', emoji: '⚔️' },
-            { name: 'Le Bandit', provider: 'Hacksaw', emoji: '🦝' },
-            { name: 'Big Bass Bonanza', provider: 'Pragmatic Play', emoji: '🎣' },
-            { name: 'Sugar Rush', provider: 'Pragmatic Play', emoji: '🍭' },
-            { name: 'Retro Tapes', provider: 'Push Gaming', emoji: '📼' },
+            { name: 'Dungeon Door', provider: 'Donk Originals', emoji: '🚪', image: 'images/dungeon.png' },
+            { name: 'Rocket Runner', provider: 'Donk Originals', emoji: '🚀', image: 'images/rocket.png' },
+            { name: 'Treasure Dive', provider: 'Donk Originals', emoji: '🤿', image: 'images/treasure.png' },
+            { name: 'Meteor Mine', provider: 'Donk Originals', emoji: '☄️', image: 'images/meteor.png' },
         ],
         'originals-full': [
             { name: 'Dice', provider: 'Donk Originals', emoji: '🎲', image: 'images/dice.png' },
