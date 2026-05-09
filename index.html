@@ -10,7 +10,7 @@
     <link rel="preconnect" href="https://fonts.googleapis.com">
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
     <link href="https://fonts.googleapis.com/css2?family=Tektur:wght@400;500;600;700;800;900&family=Hanken+Grotesk:wght@300;400;500;600;700;800&family=Azeret+Mono:wght@400;500;600;700&display=swap" rel="stylesheet">
-    <link rel="stylesheet" href="css/style.css?v=9">
+    <link rel="stylesheet" href="css/style.css?v=10">
     <script src="https://cdn.socket.io/4.5.4/socket.io.min.js"></script>
 </head>
 <body>
@@ -1043,6 +1043,277 @@
                         <div class="game-footer-right"><button class="game-follow-btn" data-game="hilo">♡ Follow</button></div>
                     </div>
                     <div class="game-modal hidden" id="hiloFairModal"><div class="game-modal-overlay"></div><div class="game-modal-content"><h3>Provably Fair</h3><p>Each card uses a SHA-256 hash chain.</p><div class="game-fair-row"><span>Server Seed</span><code id="hiloFairServer">---</code></div><div class="game-fair-row"><span>Client Seed</span><code id="hiloFairClient">---</code></div><div class="game-fair-row"><span>Nonce</span><code id="hiloFairNonce">---</code></div><button class="game-modal-close" id="hiloFairClose">Close</button></div></div>
+                </div>
+
+                <!-- DUNGEON DOOR GAME VIEW -->
+                <div class="view" data-view="dungeon">
+                    <div class="game-layout">
+                        <div class="game-panel">
+                            <div class="game-panel-inner">
+                                <div class="game-amount-section">
+                                    <label class="game-amount-label">Amount</label>
+                                    <div class="game-amount-input-row">
+                                        <div class="game-amount-input-wrap">
+                                            <input type="number" class="game-amount-input" id="dungeonBetInput" value="10" step="0.01" min="0.01">
+                                            <span class="game-amount-curr">$</span>
+                                        </div>
+                                        <button class="game-amount-mod" data-game="dungeon" data-mod="0.5">½</button>
+                                        <button class="game-amount-mod" data-game="dungeon" data-mod="2">2×</button>
+                                    </div>
+                                </div>
+                                <div class="game-control-group">
+                                    <label class="game-control-label">Current Multiplier</label>
+                                    <div class="dungeon-mult-display" id="dungeonMultDisplay">1.00×</div>
+                                </div>
+                                <div class="game-control-group">
+                                    <label class="game-control-label">Doors Opened</label>
+                                    <div class="dungeon-doors-display" id="dungeonDoorsDisplay">0 / 8</div>
+                                </div>
+                                <button class="game-play-btn" id="dungeonPlayBtn">Start Run</button>
+                                <button class="game-play-btn hidden" id="dungeonCashoutBtn" style="background:var(--neon);color:#000;">Escape with Loot</button>
+                                <div class="game-history-area">
+                                    <div class="game-history-header"><span>History</span><button class="game-history-clear" data-game="dungeon">Clear</button></div>
+                                    <div class="game-history-list" id="dungeonHistoryList"></div>
+                                </div>
+                            </div>
+                        </div>
+                        <div class="game-stage" id="dungeonStage">
+                            <div class="dungeon-scene" id="dungeonScene">
+                                <div class="dungeon-hall" id="dungeonHall">
+                                    <div class="dungeon-door" data-door="0">
+                                        <div class="dungeon-door-frame">
+                                            <div class="dungeon-door-plank"></div>
+                                            <div class="dungeon-door-plank"></div>
+                                            <div class="dungeon-door-plank"></div>
+                                            <div class="dungeon-door-keyhole"></div>
+                                            <div class="dungeon-door-handle"></div>
+                                        </div>
+                                        <div class="dungeon-door-glow"></div>
+                                    </div>
+                                    <div class="dungeon-door" data-door="1">
+                                        <div class="dungeon-door-frame">
+                                            <div class="dungeon-door-plank"></div>
+                                            <div class="dungeon-door-plank"></div>
+                                            <div class="dungeon-door-plank"></div>
+                                            <div class="dungeon-door-keyhole"></div>
+                                            <div class="dungeon-door-handle"></div>
+                                        </div>
+                                        <div class="dungeon-door-glow"></div>
+                                    </div>
+                                    <div class="dungeon-door" data-door="2">
+                                        <div class="dungeon-door-frame">
+                                            <div class="dungeon-door-plank"></div>
+                                            <div class="dungeon-door-plank"></div>
+                                            <div class="dungeon-door-plank"></div>
+                                            <div class="dungeon-door-keyhole"></div>
+                                            <div class="dungeon-door-handle"></div>
+                                        </div>
+                                        <div class="dungeon-door-glow"></div>
+                                    </div>
+                                </div>
+                                <div class="dungeon-result" id="dungeonResult"></div>
+                                <div class="dungeon-particles" id="dungeonParticles"></div>
+                            </div>
+                        </div>
+                    </div>
+                    <div class="game-bar">
+                        <div class="game-bar-left"><button class="game-bar-btn" id="dungeonSoundToggle">🔊</button></div>
+                        <div class="game-bar-center">DONK</div>
+                        <div class="game-bar-right"><button class="game-bar-btn game-fairness-btn" id="dungeonFairBtn">Fairness</button></div>
+                    </div>
+                    <div class="game-footer">
+                        <div class="game-footer-left"><div class="game-footer-icon">◈</div><div class="game-footer-meta"><div class="game-footer-name">Donk Originals</div><div class="game-footer-players"><span class="game-live-dot"></span><span id="dungeonPlayerCount">1.8K</span> Playing</div></div></div>
+                        <div class="game-footer-right"><button class="game-follow-btn" data-game="dungeon">♡ Follow</button></div>
+                    </div>
+                    <div class="game-modal hidden" id="dungeonFairModal"><div class="game-modal-overlay"></div><div class="game-modal-content"><h3>Provably Fair</h3><p>Each round uses a SHA-256 hash chain.</p><div class="game-fair-row"><span>Server Seed</span><code id="dungeonFairServer">---</code></div><div class="game-fair-row"><span>Client Seed</span><code id="dungeonFairClient">---</code></div><div class="game-fair-row"><span>Nonce</span><code id="dungeonFairNonce">---</code></div><button class="game-modal-close" id="dungeonFairClose">Close</button></div></div>
+                </div>
+
+                <!-- ROCKET RUNNER GAME VIEW -->
+                <div class="view" data-view="rocket">
+                    <div class="game-layout">
+                        <div class="game-panel">
+                            <div class="game-panel-inner">
+                                <div class="game-amount-section">
+                                    <label class="game-amount-label">Amount</label>
+                                    <div class="game-amount-input-row">
+                                        <div class="game-amount-input-wrap">
+                                            <input type="number" class="game-amount-input" id="rocketBetInput" value="10" step="0.01" min="0.01">
+                                            <span class="game-amount-curr">$</span>
+                                        </div>
+                                        <button class="game-amount-mod" data-game="rocket" data-mod="0.5">½</button>
+                                        <button class="game-amount-mod" data-game="rocket" data-mod="2">2×</button>
+                                    </div>
+                                </div>
+                                <div class="game-control-group">
+                                    <label class="game-control-label">Auto Cashout</label>
+                                    <div class="rocket-auto-wrap">
+                                        <input type="number" class="rocket-auto-input" id="rocketAutoCashout" value="0" step="0.01" min="0">
+                                        <span class="rocket-auto-x">×</span>
+                                    </div>
+                                    <div class="rocket-auto-hint" id="rocketAutoHint">Off</div>
+                                </div>
+                                <button class="game-play-btn" id="rocketPlayBtn">Launch</button>
+                                <button class="game-play-btn hidden" id="rocketCashoutBtn" style="background:var(--neon);color:#000;">Cash Out</button>
+                                <div class="game-history-area">
+                                    <div class="game-history-header"><span>History</span><button class="game-history-clear" data-game="rocket">Clear</button></div>
+                                    <div class="game-history-list" id="rocketHistoryList"></div>
+                                </div>
+                            </div>
+                        </div>
+                        <div class="game-stage" id="rocketStage">
+                            <div class="rocket-scene" id="rocketScene">
+                                <div class="rocket-track" id="rocketTrack">
+                                    <div class="rocket-track-line"></div>
+                                    <div class="rocket-track-line"></div>
+                                    <div class="rocket-track-line"></div>
+                                </div>
+                                <div class="rocket-craft" id="rocketCraft">
+                                    <div class="rocket-body"></div>
+                                    <div class="rocket-flame" id="rocketFlame"></div>
+                                </div>
+                                <div class="rocket-obstacles" id="rocketObstacles"></div>
+                                <div class="rocket-coins" id="rocketCoins"></div>
+                                <div class="rocket-mult" id="rocketMult">1.00×</div>
+                                <div class="rocket-crash-flash" id="rocketCrashFlash"></div>
+                            </div>
+                        </div>
+                    </div>
+                    <div class="game-bar">
+                        <div class="game-bar-left"><button class="game-bar-btn" id="rocketSoundToggle">🔊</button></div>
+                        <div class="game-bar-center">DONK</div>
+                        <div class="game-bar-right"><button class="game-bar-btn game-fairness-btn" id="rocketFairBtn">Fairness</button></div>
+                    </div>
+                    <div class="game-footer">
+                        <div class="game-footer-left"><div class="game-footer-icon">◈</div><div class="game-footer-meta"><div class="game-footer-name">Donk Originals</div><div class="game-footer-players"><span class="game-live-dot"></span><span id="rocketPlayerCount">2.6K</span> Playing</div></div></div>
+                        <div class="game-footer-right"><button class="game-follow-btn" data-game="rocket">♡ Follow</button></div>
+                    </div>
+                    <div class="game-modal hidden" id="rocketFairModal"><div class="game-modal-overlay"></div><div class="game-modal-content"><h3>Provably Fair</h3><p>Each round uses a SHA-256 hash chain.</p><div class="game-fair-row"><span>Server Seed</span><code id="rocketFairServer">---</code></div><div class="game-fair-row"><span>Client Seed</span><code id="rocketFairClient">---</code></div><div class="game-fair-row"><span>Nonce</span><code id="rocketFairNonce">---</code></div><button class="game-modal-close" id="rocketFairClose">Close</button></div></div>
+                </div>
+
+                <!-- TREASURE DIVE GAME VIEW -->
+                <div class="view" data-view="treasure">
+                    <div class="game-layout">
+                        <div class="game-panel">
+                            <div class="game-panel-inner">
+                                <div class="game-amount-section">
+                                    <label class="game-amount-label">Amount</label>
+                                    <div class="game-amount-input-row">
+                                        <div class="game-amount-input-wrap">
+                                            <input type="number" class="game-amount-input" id="treasureBetInput" value="10" step="0.01" min="0.01">
+                                            <span class="game-amount-curr">$</span>
+                                        </div>
+                                        <button class="game-amount-mod" data-game="treasure" data-mod="0.5">½</button>
+                                        <button class="game-amount-mod" data-game="treasure" data-mod="2">2×</button>
+                                    </div>
+                                </div>
+                                <div class="game-control-group">
+                                    <label class="game-control-label">Current Depth</label>
+                                    <div class="treasure-depth-display" id="treasureDepthDisplay">Surface</div>
+                                </div>
+                                <div class="game-control-group">
+                                    <label class="game-control-label">Multiplier</label>
+                                    <div class="treasure-mult-display" id="treasureMultDisplay">1.00×</div>
+                                </div>
+                                <div class="game-control-group">
+                                    <label class="game-control-label">Pressure</label>
+                                    <div class="treasure-pressure-bar"><div class="treasure-pressure-fill" id="treasurePressureFill"></div></div>
+                                </div>
+                                <button class="game-play-btn" id="treasurePlayBtn">Begin Dive</button>
+                                <button class="game-play-btn hidden" id="treasureDiveBtn">Dive Deeper</button>
+                                <button class="game-play-btn hidden" id="treasureCashoutBtn" style="background:var(--neon);color:#000;">Surface with Treasure</button>
+                                <div class="game-history-area">
+                                    <div class="game-history-header"><span>History</span><button class="game-history-clear" data-game="treasure">Clear</button></div>
+                                    <div class="game-history-list" id="treasureHistoryList"></div>
+                                </div>
+                            </div>
+                        </div>
+                        <div class="game-stage" id="treasureStage">
+                            <div class="treasure-scene" id="treasureScene">
+                                <div class="treasure-ocean" id="treasureOcean">
+                                    <div class="treasure-rays"></div>
+                                    <div class="treasure-bubbles" id="treasureBubbles"></div>
+                                    <div class="treasure-sub" id="treasureSub">
+                                        <div class="treasure-sub-body"></div>
+                                        <div class="treasure-sub-light"></div>
+                                        <div class="treasure-sub-bubbles"></div>
+                                    </div>
+                                    <div class="treasure-chest" id="treasureChest">
+                                        <div class="treasure-chest-lid" id="treasureChestLid"></div>
+                                        <div class="treasure-chest-glow"></div>
+                                    </div>
+                                    <div class="treasure-depth-markers" id="treasureDepthMarkers"></div>
+                                </div>
+                                <div class="treasure-result" id="treasureResult"></div>
+                                <div class="treasure-crack" id="treasureCrack"></div>
+                            </div>
+                        </div>
+                    </div>
+                    <div class="game-bar">
+                        <div class="game-bar-left"><button class="game-bar-btn" id="treasureSoundToggle">🔊</button></div>
+                        <div class="game-bar-center">DONK</div>
+                        <div class="game-bar-right"><button class="game-bar-btn game-fairness-btn" id="treasureFairBtn">Fairness</button></div>
+                    </div>
+                    <div class="game-footer">
+                        <div class="game-footer-left"><div class="game-footer-icon">◈</div><div class="game-footer-meta"><div class="game-footer-name">Donk Originals</div><div class="game-footer-players"><span class="game-live-dot"></span><span id="treasurePlayerCount">1.5K</span> Playing</div></div></div>
+                        <div class="game-footer-right"><button class="game-follow-btn" data-game="treasure">♡ Follow</button></div>
+                    </div>
+                    <div class="game-modal hidden" id="treasureFairModal"><div class="game-modal-overlay"></div><div class="game-modal-content"><h3>Provably Fair</h3><p>Each round uses a SHA-256 hash chain.</p><div class="game-fair-row"><span>Server Seed</span><code id="treasureFairServer">---</code></div><div class="game-fair-row"><span>Client Seed</span><code id="treasureFairClient">---</code></div><div class="game-fair-row"><span>Nonce</span><code id="treasureFairNonce">---</code></div><button class="game-modal-close" id="treasureFairClose">Close</button></div></div>
+                </div>
+
+                <!-- METEOR MINE GAME VIEW -->
+                <div class="view" data-view="meteor">
+                    <div class="game-layout">
+                        <div class="game-panel">
+                            <div class="game-panel-inner">
+                                <div class="game-amount-section">
+                                    <label class="game-amount-label">Amount</label>
+                                    <div class="game-amount-input-row">
+                                        <div class="game-amount-input-wrap">
+                                            <input type="number" class="game-amount-input" id="meteorBetInput" value="10" step="0.01" min="0.01">
+                                            <span class="game-amount-curr">$</span>
+                                        </div>
+                                        <button class="game-amount-mod" data-game="meteor" data-mod="0.5">½</button>
+                                        <button class="game-amount-mod" data-game="meteor" data-mod="2">2×</button>
+                                    </div>
+                                </div>
+                                <div class="game-control-group">
+                                    <label class="game-control-label">Multiplier</label>
+                                    <div class="meteor-mult-display" id="meteorMultDisplay">1.00×</div>
+                                </div>
+                                <div class="game-control-group">
+                                    <label class="game-control-label">Rocks Mined</label>
+                                    <div class="meteor-mined-display" id="meteorMinedDisplay">0</div>
+                                </div>
+                                <button class="game-play-btn" id="meteorPlayBtn">Start Mining</button>
+                                <button class="game-play-btn hidden" id="meteorCashoutBtn" style="background:var(--neon);color:#000;">Secure Cargo</button>
+                                <div class="game-history-area">
+                                    <div class="game-history-header"><span>History</span><button class="game-history-clear" data-game="meteor">Clear</button></div>
+                                    <div class="game-history-list" id="meteorHistoryList"></div>
+                                </div>
+                            </div>
+                        </div>
+                        <div class="game-stage" id="meteorStage">
+                            <div class="meteor-scene" id="meteorScene">
+                                <div class="meteor-ship" id="meteorShip">
+                                    <div class="meteor-ship-body"></div>
+                                    <div class="meteor-ship-beam" id="meteorShipBeam"></div>
+                                </div>
+                                <div class="meteor-field" id="meteorField"></div>
+                                <div class="meteor-result" id="meteorResult"></div>
+                                <div class="meteor-explosion" id="meteorExplosion"></div>
+                            </div>
+                        </div>
+                    </div>
+                    <div class="game-bar">
+                        <div class="game-bar-left"><button class="game-bar-btn" id="meteorSoundToggle">🔊</button></div>
+                        <div class="game-bar-center">DONK</div>
+                        <div class="game-bar-right"><button class="game-bar-btn game-fairness-btn" id="meteorFairBtn">Fairness</button></div>
+                    </div>
+                    <div class="game-footer">
+                        <div class="game-footer-left"><div class="game-footer-icon">◈</div><div class="game-footer-meta"><div class="game-footer-name">Donk Originals</div><div class="game-footer-players"><span class="game-live-dot"></span><span id="meteorPlayerCount">2.1K</span> Playing</div></div></div>
+                        <div class="game-footer-right"><button class="game-follow-btn" data-game="meteor">♡ Follow</button></div>
+                    </div>
+                    <div class="game-modal hidden" id="meteorFairModal"><div class="game-modal-overlay"></div><div class="game-modal-content"><h3>Provably Fair</h3><p>Each round uses a SHA-256 hash chain.</p><div class="game-fair-row"><span>Server Seed</span><code id="meteorFairServer">---</code></div><div class="game-fair-row"><span>Client Seed</span><code id="meteorFairClient">---</code></div><div class="game-fair-row"><span>Nonce</span><code id="meteorFairNonce">---</code></div><button class="game-modal-close" id="meteorFairClose">Close</button></div></div>
                 </div>
 
                 <!-- ROULETTE GAME VIEW -->
@@ -2243,7 +2514,7 @@
     <!-- Toast Notification -->
     <div class="toast-container" id="toastContainer"></div>
 
-    <script src="js/main.js?v=6"></script>
+    <script src="js/main.js?v=7"></script>
     <script src="js/roulette.js?v=4"></script>
     <script src="js/poker.js?v=5"></script>
     <script src="js/texasholdem.js?v=4"></script>

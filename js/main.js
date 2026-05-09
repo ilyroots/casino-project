@@ -647,6 +647,10 @@
             { name: 'Limbo', provider: 'Donk Originals', emoji: '📉', image: 'images/limbo.png' },
             { name: 'Keno', provider: 'Donk Originals', emoji: '🎯', image: 'images/keno.png' },
             { name: 'Hilo', provider: 'Donk Originals', emoji: '🃏', image: 'images/hilo.png' },
+            { name: 'Dungeon Door', provider: 'Donk Originals', emoji: '🚪', image: 'images/dungeon.png' },
+            { name: 'Rocket Runner', provider: 'Donk Originals', emoji: '🚀', image: 'images/rocket.png' },
+            { name: 'Treasure Dive', provider: 'Donk Originals', emoji: '🤿', image: 'images/treasure.png' },
+            { name: 'Meteor Mine', provider: 'Donk Originals', emoji: '☄️', image: 'images/meteor.png' },
         ],
         'blackjack-full': [
             { name: 'Classic Blackjack', provider: 'Evolution', emoji: '♠️' },
@@ -704,7 +708,9 @@
         if (!container || !games) return;
         const viewMap = {
             'Dice': 'dice', 'Plinko': 'plinko', 'Mines': 'mines',
-            'Crash': 'crash', 'Limbo': 'limbo', 'Keno': 'keno', 'Hilo': 'hilo'
+            'Crash': 'crash', 'Limbo': 'limbo', 'Keno': 'keno', 'Hilo': 'hilo',
+            'Dungeon Door': 'dungeon', 'Rocket Runner': 'rocket',
+            'Treasure Dive': 'treasure', 'Meteor Mine': 'meteor'
         };
         container.innerHTML = games.map((g, i) => {
             const view = viewMap[g.name];
@@ -787,6 +793,10 @@
         initPlinko();
         initKeno();
         initHilo();
+        initDungeon();
+        initRocket();
+        initTreasure();
+        initMeteor();
         updateAuthUI();
         loadTransactions();
     }
@@ -2477,6 +2487,628 @@
         $('#hiloSoundToggle')?.addEventListener('click', () => {
             bjSoundOn = !bjSoundOn;
             $('#hiloSoundToggle').textContent = bjSoundOn ? '🔊' : '🔇';
+        });
+    }
+
+    // ═══════════════════════════════════════════════
+    // DUNGEON DOOR GAME
+    // ═══════════════════════════════════════════════
+    let dungeonBet = 10, dungeonHistory = [], dungeonNonce = 0;
+    let dungeonMult = 1.0, dungeonDoorsOpened = 0, dungeonInProgress = false;
+    let dungeonSeeds = { server: gameGenerateSeed(), client: gameGenerateSeed() };
+    const DUNGEON_MAX_DOORS = 8;
+    const DUNGEON_PROBS = [
+        { safe: 0.75, bonus: 0.20, trap: 0.05 },
+        { safe: 0.65, bonus: 0.20, trap: 0.15 },
+        { safe: 0.55, bonus: 0.20, trap: 0.25 },
+        { safe: 0.45, bonus: 0.20, trap: 0.35 },
+        { safe: 0.35, bonus: 0.20, trap: 0.45 },
+        { safe: 0.25, bonus: 0.20, trap: 0.55 },
+        { safe: 0.15, bonus: 0.15, trap: 0.70 },
+        { safe: 0.10, bonus: 0.10, trap: 0.80 },
+    ];
+
+    function generateDungeonOutcome(round) {
+        const cfg = DUNGEON_PROBS[Math.min(round, DUNGEON_PROBS.length - 1)];
+        const r = Math.random();
+        if (r < cfg.trap) return { type: 'trap', multDelta: 0, label: 'Trap!' };
+        if (r < cfg.trap + cfg.bonus) {
+            const delta = 1.00 + Math.random() * 0.75;
+            return { type: 'bonus', multDelta: delta, label: 'Bonus!' };
+        }
+        const delta = 0.25 + Math.random() * 0.20;
+        return { type: 'safe', multDelta: delta, label: 'Safe' };
+    }
+
+    function updateDungeonUI() {
+        const md = $('#dungeonMultDisplay');
+        const dd = $('#dungeonDoorsDisplay');
+        if (md) md.textContent = dungeonMult.toFixed(2) + '×';
+        if (dd) dd.textContent = dungeonDoorsOpened + ' / ' + DUNGEON_MAX_DOORS;
+    }
+
+    function resetDungeonScene() {
+        $$('.dungeon-door').forEach(d => {
+            d.className = 'dungeon-door';
+            d.style.pointerEvents = '';
+        });
+        $('#dungeonResult')?.classList.remove('show', 'win', 'loss');
+        $('#dungeonParticles').innerHTML = '';
+    }
+
+    function spawnDungeonParticles(x, y, color = '#ffd700') {
+        const container = $('#dungeonParticles');
+        if (!container) return;
+        for (let i = 0; i < 12; i++) {
+            const p = document.createElement('div');
+            p.className = 'dungeon-particle';
+            p.style.left = x + 'px';
+            p.style.top = y + 'px';
+            p.style.background = color;
+            const angle = (Math.PI * 2 * i) / 12;
+            const dist = 40 + Math.random() * 60;
+            p.style.setProperty('--px', Math.cos(angle) * dist + 'px');
+            p.style.setProperty('--py', Math.sin(angle) * dist + 'px');
+            container.appendChild(p);
+            setTimeout(() => p.remove(), 800);
+        }
+    }
+
+    function openDungeonDoor(doorEl, outcome) {
+        const rect = doorEl.getBoundingClientRect();
+        const scene = $('#dungeonScene').getBoundingClientRect();
+        const cx = rect.left - scene.left + rect.width / 2;
+        const cy = rect.top - scene.top + rect.height / 2;
+
+        doorEl.classList.add('opening');
+        setTimeout(() => {
+            doorEl.classList.remove('opening');
+            doorEl.classList.add(outcome.type);
+            if (outcome.type === 'trap') {
+                doorEl.classList.add('trap');
+                spawnDungeonParticles(cx, cy, '#ff4444');
+            } else {
+                spawnDungeonParticles(cx, cy, outcome.type === 'bonus' ? '#ff00ff' : '#ffd700');
+            }
+        }, 400);
+    }
+
+    function startDungeon() {
+        dungeonBet = getGameBet('#dungeonBetInput');
+        if (dungeonBet <= 0 || getBjBalanceUsd() <= 0) return;
+        if (!bjDeductBet(dungeonBet)) return;
+        dungeonNonce++;
+        dungeonMult = 1.0;
+        dungeonDoorsOpened = 0;
+        dungeonInProgress = true;
+        resetDungeonScene();
+        updateDungeonUI();
+        $('#dungeonPlayBtn')?.classList.add('hidden');
+        $('#dungeonCashoutBtn')?.classList.remove('hidden');
+        $('#dungeonFairServer').textContent = dungeonSeeds.server.slice(0,16)+'...';
+        $('#dungeonFairClient').textContent = dungeonSeeds.client.slice(0,16)+'...';
+        $('#dungeonFairNonce').textContent = dungeonNonce;
+        gamePlaySound('click');
+    }
+
+    function handleDoorClick(idx) {
+        if (!dungeonInProgress) return;
+        const doors = $$('.dungeon-door');
+        doors.forEach((d, i) => { if (i !== idx) d.classList.add('disabled'); });
+
+        const outcome = generateDungeonOutcome(dungeonDoorsOpened);
+        openDungeonDoor(doors[idx], outcome);
+
+        if (outcome.type === 'trap') {
+            dungeonInProgress = false;
+            setTimeout(() => {
+                const res = $('#dungeonResult');
+                res.textContent = 'The dungeon caught you!';
+                res.className = 'dungeon-result show loss';
+                gameAddHistory('dungeonHistoryList', 'loss', dungeonBet, 0);
+                gamePlaySound('loss');
+                endDungeonRound();
+            }, 800);
+        } else {
+            dungeonMult += outcome.multDelta;
+            dungeonDoorsOpened++;
+            updateDungeonUI();
+            setTimeout(() => {
+                doors.forEach(d => d.classList.remove('disabled', 'safe', 'bonus', 'trap'));
+                if (dungeonDoorsOpened >= DUNGEON_MAX_DOORS) {
+                    cashoutDungeon();
+                }
+            }, 900);
+        }
+    }
+
+    function cashoutDungeon() {
+        if (!dungeonInProgress) return;
+        dungeonInProgress = false;
+        const payout = dungeonBet * dungeonMult;
+        bjAddWinnings(payout);
+        const res = $('#dungeonResult');
+        res.textContent = 'You escaped with ' + dungeonMult.toFixed(2) + '×!';
+        res.className = 'dungeon-result show win';
+        gameAddHistory('dungeonHistoryList', 'win', dungeonBet, payout);
+        gamePlaySound('win');
+        endDungeonRound();
+    }
+
+    function endDungeonRound() {
+        $('#dungeonPlayBtn')?.classList.remove('hidden');
+        $('#dungeonCashoutBtn')?.classList.add('hidden');
+        setTimeout(() => {
+            $('#dungeonResult')?.classList.remove('show');
+            resetDungeonScene();
+        }, 2200);
+    }
+
+    function initDungeon() {
+        updateDungeonUI();
+        $('#dungeonBetInput')?.addEventListener('change', () => updateGameBet('#dungeonBetInput', getGameBet('#dungeonBetInput')));
+        setupAmountMods('dungeon', '#dungeonBetInput');
+        $('#dungeonPlayBtn')?.addEventListener('click', startDungeon);
+        $('#dungeonCashoutBtn')?.addEventListener('click', cashoutDungeon);
+        setupFairModal('#dungeonFairBtn', '#dungeonFairModal', '#dungeonFairClose', '#dungeonFairServer', '#dungeonFairClient', '#dungeonFairNonce', dungeonSeeds);
+        $('#dungeonSoundToggle')?.addEventListener('click', () => {
+            bjSoundOn = !bjSoundOn;
+            $('#dungeonSoundToggle').textContent = bjSoundOn ? '🔊' : '🔇';
+        });
+        $$('.dungeon-door').forEach((d, i) => {
+            d.addEventListener('click', () => handleDoorClick(i));
+        });
+    }
+
+    // ═══════════════════════════════════════════════
+    // ROCKET RUNNER GAME
+    // ═══════════════════════════════════════════════
+    let rocketBet = 10, rocketHistory = [], rocketNonce = 0;
+    let rocketMult = 1.0, rocketCrashPoint = 1.0;
+    let rocketAnimId = null, rocketStartTime = 0;
+    let rocketInProgress = false, rocketCashedOut = false;
+    let rocketSeeds = { server: gameGenerateSeed(), client: gameGenerateSeed() };
+
+    function generateRocketCrashPoint() {
+        const r = Math.random();
+        if (r < 0.35) return 1.01 + Math.random() * 0.49;
+        if (r < 0.65) return 1.51 + Math.random() * 0.99;
+        if (r < 0.85) return 2.51 + Math.random() * 2.49;
+        if (r < 0.95) return 5.01 + Math.random() * 4.99;
+        return 10.01 + Math.random() * 9.99;
+    }
+
+    function updateRocketMultDisplay() {
+        const el = $('#rocketMult');
+        if (el) el.textContent = rocketMult.toFixed(2) + '×';
+    }
+
+    function spawnRocketObstacles() {
+        const container = $('#rocketObstacles');
+        if (!container) return;
+        container.innerHTML = '';
+        for (let i = 0; i < 3; i++) {
+            const obs = document.createElement('div');
+            obs.className = 'rocket-obstacle';
+            obs.style.left = (30 + Math.random() * 40) + '%';
+            obs.style.top = (20 + Math.random() * 30) + '%';
+            obs.style.animationDelay = (i * 0.3) + 's';
+            obs.style.animationDuration = (1.2 + Math.random() * 0.8) + 's';
+            container.appendChild(obs);
+            setTimeout(() => obs.remove(), 2000);
+        }
+    }
+
+    function spawnRocketCoins() {
+        const container = $('#rocketCoins');
+        if (!container) return;
+        for (let i = 0; i < 4; i++) {
+            const coin = document.createElement('div');
+            coin.className = 'rocket-coin';
+            coin.style.left = (20 + Math.random() * 60) + '%';
+            coin.style.top = (10 + Math.random() * 40) + '%';
+            coin.style.animationDelay = (i * 0.2) + 's';
+            container.appendChild(coin);
+            setTimeout(() => coin.remove(), 2200);
+        }
+    }
+
+    function rocketFrame(ts) {
+        if (!rocketInProgress) return;
+        if (!rocketStartTime) rocketStartTime = ts;
+        const elapsed = (ts - rocketStartTime) / 1000;
+        const baseSpeed = 0.15;
+        const acceleration = 0.08;
+        rocketMult = 1 + elapsed * baseSpeed + Math.pow(elapsed, 1.45) * acceleration;
+        updateRocketMultDisplay();
+
+        const multEl = $('#rocketMult');
+        if (multEl) {
+            multEl.classList.add('pulse');
+            setTimeout(() => multEl.classList.remove('pulse'), 150);
+        }
+
+        // Auto cashout
+        const autoVal = parseFloat($('#rocketAutoCashout')?.value) || 0;
+        if (autoVal > 1.01 && rocketMult >= autoVal && !rocketCashedOut) {
+            cashoutRocket();
+            return;
+        }
+
+        if (rocketMult >= rocketCrashPoint) {
+            rocketCrash();
+            return;
+        }
+
+        // Spawn visuals
+        if (Math.random() < 0.03) spawnRocketObstacles();
+        if (Math.random() < 0.04) spawnRocketCoins();
+
+        // Flame intensity
+        const flame = $('#rocketFlame');
+        if (flame) {
+            const intensity = Math.min(1.5, 1 + elapsed * 0.1);
+            flame.style.transform = `translateX(-50%) scaleY(${intensity})`;
+        }
+
+        rocketAnimId = requestAnimationFrame(rocketFrame);
+    }
+
+    function startRocket() {
+        rocketBet = getGameBet('#rocketBetInput');
+        if (rocketBet <= 0 || getBjBalanceUsd() <= 0) return;
+        if (!bjDeductBet(rocketBet)) return;
+        rocketNonce++;
+        rocketCrashPoint = generateRocketCrashPoint();
+        rocketMult = 1.0;
+        rocketInProgress = true;
+        rocketCashedOut = false;
+        rocketStartTime = 0;
+        updateRocketMultDisplay();
+        $('#rocketPlayBtn')?.classList.add('hidden');
+        $('#rocketCashoutBtn')?.classList.remove('hidden');
+        $('#rocketCrashFlash')?.classList.remove('show');
+        $('#rocketFairServer').textContent = rocketSeeds.server.slice(0,16)+'...';
+        $('#rocketFairClient').textContent = rocketSeeds.client.slice(0,16)+'...';
+        $('#rocketFairNonce').textContent = rocketNonce;
+        gamePlaySound('click');
+        rocketAnimId = requestAnimationFrame(rocketFrame);
+    }
+
+    function cashoutRocket() {
+        if (!rocketInProgress || rocketCashedOut) return;
+        rocketCashedOut = true;
+        rocketInProgress = false;
+        cancelAnimationFrame(rocketAnimId);
+        const payout = rocketBet * rocketMult;
+        bjAddWinnings(payout);
+        $('#rocketPlayBtn')?.classList.remove('hidden');
+        $('#rocketCashoutBtn')?.classList.add('hidden');
+        gameAddHistory('rocketHistoryList', 'win', rocketBet, payout);
+        gamePlaySound('win');
+    }
+
+    function rocketCrash() {
+        rocketInProgress = false;
+        cancelAnimationFrame(rocketAnimId);
+        $('#rocketCrashFlash')?.classList.add('show');
+        setTimeout(() => $('#rocketCrashFlash')?.classList.remove('show'), 400);
+        $('#rocketPlayBtn')?.classList.remove('hidden');
+        $('#rocketCashoutBtn')?.classList.add('hidden');
+        gameAddHistory('rocketHistoryList', 'loss', rocketBet, 0);
+        gamePlaySound('loss');
+    }
+
+    function initRocket() {
+        updateRocketMultDisplay();
+        $('#rocketBetInput')?.addEventListener('change', () => updateGameBet('#rocketBetInput', getGameBet('#rocketBetInput')));
+        setupAmountMods('rocket', '#rocketBetInput');
+        $('#rocketPlayBtn')?.addEventListener('click', startRocket);
+        $('#rocketCashoutBtn')?.addEventListener('click', cashoutRocket);
+        $('#rocketAutoCashout')?.addEventListener('input', (e) => {
+            const hint = $('#rocketAutoHint');
+            if (hint) hint.textContent = parseFloat(e.target.value) > 1 ? 'Active at ' + parseFloat(e.target.value).toFixed(2) + '×' : 'Off';
+        });
+        setupFairModal('#rocketFairBtn', '#rocketFairModal', '#rocketFairClose', '#rocketFairServer', '#rocketFairClient', '#rocketFairNonce', rocketSeeds);
+        $('#rocketSoundToggle')?.addEventListener('click', () => {
+            bjSoundOn = !bjSoundOn;
+            $('#rocketSoundToggle').textContent = bjSoundOn ? '🔊' : '🔇';
+        });
+    }
+
+    // ═══════════════════════════════════════════════
+    // TREASURE DIVE GAME
+    // ═══════════════════════════════════════════════
+    let treasureBet = 10, treasureHistory = [], treasureNonce = 0;
+    let treasureDepth = 0, treasureMult = 1.0, treasureInProgress = false;
+    let treasureSeeds = { server: gameGenerateSeed(), client: gameGenerateSeed() };
+    const TREASURE_LEVELS = [
+        { name: 'Reef Zone', survival: 0.95, mult: 1.15 },
+        { name: 'Blue Drop', survival: 0.88, mult: 1.45 },
+        { name: 'Lost Wreck', survival: 0.78, mult: 2.00 },
+        { name: 'Abyss Gate', survival: 0.65, mult: 3.00 },
+        { name: 'Sunken Vault', survival: 0.50, mult: 5.00 },
+        { name: 'Black Trench', survival: 0.35, mult: 9.00 },
+        { name: 'Leviathan Depth', survival: 0.22, mult: 15.00 },
+    ];
+
+    function updateTreasureUI() {
+        const dd = $('#treasureDepthDisplay');
+        const md = $('#treasureMultDisplay');
+        const pf = $('#treasurePressureFill');
+        if (dd) dd.textContent = treasureDepth === 0 ? 'Surface' : TREASURE_LEVELS[Math.min(treasureDepth - 1, TREASURE_LEVELS.length - 1)].name;
+        if (md) md.textContent = treasureMult.toFixed(2) + '×';
+        if (pf) pf.style.width = Math.min(100, treasureDepth * 14) + '%';
+    }
+
+    function spawnTreasureBubbles() {
+        const container = $('#treasureBubbles');
+        if (!container) return;
+        for (let i = 0; i < 6; i++) {
+            const b = document.createElement('div');
+            b.className = 'treasure-bubble';
+            const size = 4 + Math.random() * 12;
+            b.style.width = size + 'px';
+            b.style.height = size + 'px';
+            b.style.left = (Math.random() * 100) + '%';
+            b.style.bottom = '-' + size + 'px';
+            b.style.animationDuration = (2 + Math.random() * 3) + 's';
+            container.appendChild(b);
+            setTimeout(() => b.remove(), 5000);
+        }
+    }
+
+    function moveTreasureSub(depth) {
+        const sub = $('#treasureSub');
+        if (!sub) return;
+        const pct = 30 + depth * 8;
+        sub.style.top = Math.min(80, pct) + '%';
+    }
+
+    function setTreasureOceanDepth(depth) {
+        const ocean = $('#treasureOcean');
+        if (!ocean) return;
+        const darkness = Math.min(0.8, depth * 0.1);
+        ocean.style.background = `linear-gradient(180deg, 
+            rgba(13,59,102,${1-darkness*0.3}) 0%, 
+            rgba(7,42,74,${1-darkness*0.5}) 30%, 
+            rgba(4,26,46,${1-darkness*0.7}) 60%, 
+            rgba(2,13,24,${1-darkness}) 100%)`;
+    }
+
+    function startTreasure() {
+        treasureBet = getGameBet('#treasureBetInput');
+        if (treasureBet <= 0 || getBjBalanceUsd() <= 0) return;
+        if (!bjDeductBet(treasureBet)) return;
+        treasureNonce++;
+        treasureDepth = 0;
+        treasureMult = 1.0;
+        treasureInProgress = true;
+        updateTreasureUI();
+        setTreasureOceanDepth(0);
+        moveTreasureSub(0);
+        $('#treasureChestLid')?.classList.remove('open');
+        $('#treasureChestGlow')?.classList.remove('show');
+        $('#treasureResult')?.classList.remove('show', 'win', 'loss');
+        $('#treasureCrack')?.classList.remove('show');
+        $('#treasurePlayBtn')?.classList.add('hidden');
+        $('#treasureDiveBtn')?.classList.remove('hidden');
+        $('#treasureCashoutBtn')?.classList.remove('hidden');
+        $('#treasureFairServer').textContent = treasureSeeds.server.slice(0,16)+'...';
+        $('#treasureFairClient').textContent = treasureSeeds.client.slice(0,16)+'...';
+        $('#treasureFairNonce').textContent = treasureNonce;
+        spawnTreasureBubbles();
+        gamePlaySound('click');
+    }
+
+    function diveTreasure() {
+        if (!treasureInProgress) return;
+        treasureDepth++;
+        const level = TREASURE_LEVELS[Math.min(treasureDepth - 1, TREASURE_LEVELS.length - 1)];
+        treasureMult = level.mult;
+        updateTreasureUI();
+        moveTreasureSub(treasureDepth);
+        setTreasureOceanDepth(treasureDepth);
+        spawnTreasureBubbles();
+
+        const survived = Math.random() < level.survival;
+        if (!survived) {
+            treasureInProgress = false;
+            $('#treasureCrack')?.classList.add('show');
+            setTimeout(() => {
+                const res = $('#treasureResult');
+                res.textContent = 'Pressure breach!';
+                res.className = 'treasure-result show loss';
+                gameAddHistory('treasureHistoryList', 'loss', treasureBet, 0);
+                gamePlaySound('loss');
+                endTreasureRound();
+            }, 600);
+        } else {
+            gamePlaySound('click');
+            if (treasureDepth >= TREASURE_LEVELS.length) {
+                cashoutTreasure();
+            }
+        }
+    }
+
+    function cashoutTreasure() {
+        if (!treasureInProgress) return;
+        treasureInProgress = false;
+        const payout = treasureBet * treasureMult;
+        bjAddWinnings(payout);
+        $('#treasureChestLid')?.classList.add('open');
+        $('#treasureChestGlow')?.classList.add('show');
+        const res = $('#treasureResult');
+        res.textContent = 'Treasure recovered! ' + treasureMult.toFixed(2) + '×';
+        res.className = 'treasure-result show win';
+        gameAddHistory('treasureHistoryList', 'win', treasureBet, payout);
+        gamePlaySound('win');
+        endTreasureRound();
+    }
+
+    function endTreasureRound() {
+        $('#treasurePlayBtn')?.classList.remove('hidden');
+        $('#treasureDiveBtn')?.classList.add('hidden');
+        $('#treasureCashoutBtn')?.classList.add('hidden');
+        setTimeout(() => {
+            $('#treasureResult')?.classList.remove('show');
+            $('#treasureCrack')?.classList.remove('show');
+        }, 2500);
+    }
+
+    function initTreasure() {
+        updateTreasureUI();
+        $('#treasureBetInput')?.addEventListener('change', () => updateGameBet('#treasureBetInput', getGameBet('#treasureBetInput')));
+        setupAmountMods('treasure', '#treasureBetInput');
+        $('#treasurePlayBtn')?.addEventListener('click', startTreasure);
+        $('#treasureDiveBtn')?.addEventListener('click', diveTreasure);
+        $('#treasureCashoutBtn')?.addEventListener('click', cashoutTreasure);
+        setupFairModal('#treasureFairBtn', '#treasureFairModal', '#treasureFairClose', '#treasureFairServer', '#treasureFairClient', '#treasureFairNonce', treasureSeeds);
+        $('#treasureSoundToggle')?.addEventListener('click', () => {
+            bjSoundOn = !bjSoundOn;
+            $('#treasureSoundToggle').textContent = bjSoundOn ? '🔊' : '🔇';
+        });
+    }
+
+    // ═══════════════════════════════════════════════
+    // METEOR MINE GAME
+    // ═══════════════════════════════════════════════
+    let meteorBet = 10, meteorHistory = [], meteorNonce = 0;
+    let meteorMult = 1.0, meteorMined = 0, meteorInProgress = false;
+    let meteorSeeds = { server: gameGenerateSeed(), client: gameGenerateSeed() };
+    const METEOR_GRID_SIZE = 12;
+    const METEOR_PROBS = [
+        { gem: 0.80, crystal: 0.15, volatile: 0.05 },
+        { gem: 0.68, crystal: 0.17, volatile: 0.15 },
+        { gem: 0.55, crystal: 0.20, volatile: 0.25 },
+        { gem: 0.45, crystal: 0.20, volatile: 0.35 },
+        { gem: 0.35, crystal: 0.20, volatile: 0.45 },
+        { gem: 0.25, crystal: 0.15, volatile: 0.60 },
+    ];
+
+    function generateMeteorOutcome(round) {
+        const cfg = METEOR_PROBS[Math.min(round, METEOR_PROBS.length - 1)];
+        const r = Math.random();
+        if (r < cfg.volatile) return { type: 'volatile', multDelta: 0, label: 'Volatile!' };
+        if (r < cfg.volatile + cfg.crystal) {
+            const delta = 0.90 + Math.random() * 0.90;
+            return { type: 'crystal', multDelta: delta, label: 'Crystal!' };
+        }
+        const delta = 0.25 + Math.random() * 0.35;
+        return { type: 'gem', multDelta: delta, label: 'Gem!' };
+    }
+
+    function updateMeteorUI() {
+        const md = $('#meteorMultDisplay');
+        const mined = $('#meteorMinedDisplay');
+        if (md) md.textContent = meteorMult.toFixed(2) + '×';
+        if (mined) mined.textContent = meteorMined;
+    }
+
+    function renderMeteorField() {
+        const field = $('#meteorField');
+        if (!field) return;
+        field.innerHTML = '';
+        for (let i = 0; i < METEOR_GRID_SIZE; i++) {
+            const rock = document.createElement('div');
+            rock.className = 'meteor-rock';
+            rock.dataset.idx = i;
+            rock.textContent = '🪨';
+            rock.addEventListener('click', () => handleMeteorClick(i, rock));
+            field.appendChild(rock);
+        }
+    }
+
+    function handleMeteorClick(idx, rockEl) {
+        if (!meteorInProgress || rockEl.classList.contains('mined')) return;
+        rockEl.classList.add('mined');
+
+        const beam = $('#meteorShipBeam');
+        if (beam) {
+            beam.classList.add('active');
+            setTimeout(() => beam.classList.remove('active'), 400);
+        }
+
+        const outcome = generateMeteorOutcome(meteorMined);
+
+        setTimeout(() => {
+            rockEl.classList.add(outcome.type + '-reveal');
+            rockEl.textContent = '';
+
+            if (outcome.type === 'volatile') {
+                meteorInProgress = false;
+                const exp = $('#meteorExplosion');
+                exp.innerHTML = '<div class="meteor-explosion-ring"></div>';
+                setTimeout(() => {
+                    const res = $('#meteorResult');
+                    res.textContent = 'Volatile core detonated!';
+                    res.className = 'meteor-result show loss';
+                    gameAddHistory('meteorHistoryList', 'loss', meteorBet, 0);
+                    gamePlaySound('loss');
+                    endMeteorRound();
+                }, 600);
+            } else {
+                meteorMult += outcome.multDelta;
+                meteorMined++;
+                updateMeteorUI();
+                gamePlaySound('click');
+            }
+        }, 300);
+    }
+
+    function startMeteor() {
+        meteorBet = getGameBet('#meteorBetInput');
+        if (meteorBet <= 0 || getBjBalanceUsd() <= 0) return;
+        if (!bjDeductBet(meteorBet)) return;
+        meteorNonce++;
+        meteorMult = 1.0;
+        meteorMined = 0;
+        meteorInProgress = true;
+        updateMeteorUI();
+        renderMeteorField();
+        $('#meteorResult')?.classList.remove('show', 'win', 'loss');
+        $('#meteorExplosion').innerHTML = '';
+        $('#meteorPlayBtn')?.classList.add('hidden');
+        $('#meteorCashoutBtn')?.classList.remove('hidden');
+        $('#meteorFairServer').textContent = meteorSeeds.server.slice(0,16)+'...';
+        $('#meteorFairClient').textContent = meteorSeeds.client.slice(0,16)+'...';
+        $('#meteorFairNonce').textContent = meteorNonce;
+        gamePlaySound('click');
+    }
+
+    function cashoutMeteor() {
+        if (!meteorInProgress) return;
+        meteorInProgress = false;
+        const payout = meteorBet * meteorMult;
+        bjAddWinnings(payout);
+        const res = $('#meteorResult');
+        res.textContent = 'Cargo secured! ' + meteorMult.toFixed(2) + '×';
+        res.className = 'meteor-result show win';
+        gameAddHistory('meteorHistoryList', 'win', meteorBet, payout);
+        gamePlaySound('win');
+        endMeteorRound();
+    }
+
+    function endMeteorRound() {
+        $('#meteorPlayBtn')?.classList.remove('hidden');
+        $('#meteorCashoutBtn')?.classList.add('hidden');
+        setTimeout(() => {
+            $('#meteorResult')?.classList.remove('show');
+            renderMeteorField();
+        }, 2200);
+    }
+
+    function initMeteor() {
+        updateMeteorUI();
+        renderMeteorField();
+        $('#meteorBetInput')?.addEventListener('change', () => updateGameBet('#meteorBetInput', getGameBet('#meteorBetInput')));
+        setupAmountMods('meteor', '#meteorBetInput');
+        $('#meteorPlayBtn')?.addEventListener('click', startMeteor);
+        $('#meteorCashoutBtn')?.addEventListener('click', cashoutMeteor);
+        setupFairModal('#meteorFairBtn', '#meteorFairModal', '#meteorFairClose', '#meteorFairServer', '#meteorFairClient', '#meteorFairNonce', meteorSeeds);
+        $('#meteorSoundToggle')?.addEventListener('click', () => {
+            bjSoundOn = !bjSoundOn;
+            $('#meteorSoundToggle').textContent = bjSoundOn ? '🔊' : '🔇';
         });
     }
 
