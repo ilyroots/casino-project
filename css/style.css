@@ -653,8 +653,9 @@ body:hover .cursor-glow {
     align-items: center;
     justify-content: space-between;
     overflow: hidden;
-    min-height: 280px;
+    min-height: 320px;
     flex-shrink: 0;
+    background: url('../images/banner.png') center/cover no-repeat;
 }
 
 .hero-grid-bg {
@@ -743,6 +744,7 @@ body:hover .cursor-glow {
     position: relative;
     z-index: 2;
     max-width: 520px;
+    text-shadow: 0 2px 12px rgba(0,0,0,0.7);
 }
 .hero-badge {
     display: inline-flex;
@@ -1703,7 +1705,7 @@ body:hover .cursor-glow {
     .hero-section {
         justify-content: center;
         text-align: center;
-        min-height: 220px;
+        min-height: 240px;
     }
     .hero-content {
         max-width: 100%;
