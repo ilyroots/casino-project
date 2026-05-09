@@ -679,16 +679,6 @@
             { name: 'Pai Gow Poker', provider: 'Playtech', emoji: '🀄' },
             { name: 'Casino Hold\'em', provider: 'Evolution', emoji: '♦️' },
         ],
-        'table-games-full': [
-            { name: 'Baccarat', provider: 'Evolution', emoji: '🏛️' },
-            { name: 'Craps', provider: 'Evolution', emoji: '🎲' },
-            { name: 'Sic Bo', provider: 'Evolution', emoji: '🎋' },
-            { name: 'Dragon Tiger', provider: 'Evolution', emoji: '🐉' },
-            { name: 'Teen Patti', provider: 'Evolution', emoji: '🇮🇳' },
-            { name: 'Andar Bahar', provider: 'Evolution', emoji: '🎯' },
-            { name: 'Red Dog', provider: 'NetEnt', emoji: '🐕' },
-            { name: 'Casino War', provider: 'Playtech', emoji: '⚔️' },
-        ],
         slots: [
             { name: 'Book of Dead', provider: "Play'n GO", emoji: '📖' },
             { name: 'Wolf Gold', provider: 'Pragmatic Play', emoji: '🐺' },
