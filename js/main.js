@@ -491,7 +491,7 @@
                 navigateTo(link.dataset.view);
             });
         });
-        $$('.view-all[data-nav], a[data-nav]').forEach(link => {
+        $$('.view-all[data-nav], a[data-nav], button[data-nav]').forEach(link => {
             link.addEventListener('click', (e) => {
                 e.preventDefault();
                 navigateTo(link.dataset.nav);

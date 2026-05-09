@@ -10,7 +10,7 @@
     <link rel="preconnect" href="https://fonts.googleapis.com">
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
     <link href="https://fonts.googleapis.com/css2?family=Tektur:wght@400;500;600;700;800;900&family=Hanken+Grotesk:wght@300;400;500;600;700;800&family=Azeret+Mono:wght@400;500;600;700&display=swap" rel="stylesheet">
-    <link rel="stylesheet" href="css/style.css?v=13">
+    <link rel="stylesheet" href="css/style.css?v=14">
     <script src="https://cdn.socket.io/4.5.4/socket.io.min.js"></script>
 </head>
 <body>
@@ -254,45 +254,18 @@
                 <!-- HOME VIEW -->
                 <div class="view active" data-view="home">
                     <section class="hero-section">
-                        <div class="hero-grid-bg">
-                            <div class="grid-line horizontal" style="top:20%"></div>
-                            <div class="grid-line horizontal" style="top:40%"></div>
-                            <div class="grid-line horizontal" style="top:60%"></div>
-                            <div class="grid-line horizontal" style="top:80%"></div>
-                            <div class="grid-line vertical" style="left:20%"></div>
-                            <div class="grid-line vertical" style="left:40%"></div>
-                            <div class="grid-line vertical" style="left:60%"></div>
-                            <div class="grid-line vertical" style="left:80%"></div>
-                        </div>
-                        <div class="hero-orb orb-1"></div>
-                        <div class="hero-orb orb-2"></div>
-                        <div class="hero-orb orb-3"></div>
                         <div class="hero-content">
                             <div class="hero-badge"><span class="badge-pulse"></span>WELCOME OFFER</div>
                             <h1 class="hero-title">
-                                <span class="title-line">Crypto Casino</span>
-                                <span class="title-line accent">Real Wins</span>
-                                <span class="title-line">Real Wins</span>
+                                <span class="title-line">Play Donk</span>
+                                <span class="title-line accent">Originals</span>
                             </h1>
-                            <p class="hero-desc">Deposit BTC, ETH, SOL, USDT, or LTC. Play provably fair games. Withdraw anytime.</p>
+                            <p class="hero-desc">Exclusive games. Bigger wins.<br>Only on Donk.</p>
                             <div class="hero-actions">
-                                <button class="btn btn-hero-primary" id="heroDepositBtn"><span class="btn-shimmer"></span>Deposit Now</button>
-                                <button class="btn btn-hero-secondary">Browse Games</button>
+                                <button class="btn btn-hero-primary" data-nav="originals">Play Originals</button>
+                                <button class="btn btn-hero-secondary" data-nav="trending">Browse Games</button>
                             </div>
                         </div>
-                        <div class="hero-visual">
-                            <div class="card-stack">
-                                <div class="hero-card card-back"><div class="card-pattern"></div><div class="card-suit">♠</div></div>
-                                <div class="hero-card card-mid"><div class="card-pattern"></div><div class="card-suit">♥</div></div>
-                                <div class="hero-card card-front"><div class="card-pattern"></div><div class="card-suit">♦</div><div class="card-glow"></div></div>
-                            </div>
-                            <div class="floating-chips">
-                                <div class="chip chip-1"></div>
-                                <div class="chip chip-2"></div>
-                                <div class="chip chip-3"></div>
-                            </div>
-                        </div>
-                        <div class="hero-diagonal"></div>
                     </section>
 
                     <section class="promos-ticker">
@@ -2567,7 +2540,7 @@
     <!-- Toast Notification -->
     <div class="toast-container" id="toastContainer"></div>
 
-    <script src="js/main.js?v=9"></script>
+    <script src="js/main.js?v=10"></script>
     <script src="js/roulette.js?v=4"></script>
     <script src="js/poker.js?v=5"></script>
     <script src="js/texasholdem.js?v=4"></script>
