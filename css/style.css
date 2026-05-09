@@ -7326,173 +7326,489 @@ body:hover .cursor-glow {
     100% { transform: translate(var(--px), var(--py)) scale(0); opacity: 0; }
 }
 
-/* ─── Rocket Runner ─── */
-.rocket-scene {
+/* ─── Rocket Runner v2 ─── */
+.rr-scene {
     width: 100%;
     height: 100%;
     position: relative;
-    background: linear-gradient(180deg, #1a0510 0%, #2d0a1a 40%, #1a0510 100%);
+    background: #0a0208;
     overflow: hidden;
-    display: flex;
-    align-items: center;
-    justify-content: center;
+    outline: none;
 }
-.rocket-track {
+
+/* Background layers */
+.rr-bg {
     position: absolute;
-    bottom: 20%;
-    left: -20%;
-    right: -20%;
-    height: 120px;
-    transform: perspective(400px) rotateX(55deg);
-    display: flex;
-    flex-direction: column;
-    gap: 20px;
+    inset: 0;
+    background: radial-gradient(ellipse at 50% 30%, #2a0a1e 0%, #1a0510 40%, #0a0208 100%);
+    z-index: 0;
 }
-.rocket-track-line {
-    height: 3px;
-    background: linear-gradient(90deg, transparent, #ff00aa, #ff5500, #ff00aa, transparent);
+.rr-stars {
+    position: absolute;
+    inset: 0;
+    z-index: 1;
+    pointer-events: none;
+}
+.rr-star {
+    position: absolute;
+    width: 2px;
+    height: 2px;
+    background: #fff;
+    border-radius: 50%;
     opacity: 0.6;
-    animation: rocketTrackMove 0.4s linear infinite;
+    animation: rrStarTwinkle 2s ease-in-out infinite alternate;
 }
-.rocket-track-line:nth-child(2) { animation-delay: -0.15s; opacity: 0.4; }
-.rocket-track-line:nth-child(3) { animation-delay: -0.3s; opacity: 0.2; }
-@keyframes rocketTrackMove {
-    0% { transform: translateX(-100%); }
-    100% { transform: translateX(100%); }
+@keyframes rrStarTwinkle {
+    0% { opacity: 0.3; }
+    100% { opacity: 0.9; }
 }
-.rocket-craft {
-    position: relative;
-    z-index: 5;
+.rr-nebula {
+    position: absolute;
+    inset: 0;
+    z-index: 1;
+    pointer-events: none;
+    background:
+        radial-gradient(circle at 20% 60%, rgba(255,0,170,0.08) 0%, transparent 50%),
+        radial-gradient(circle at 80% 40%, rgba(0,212,255,0.06) 0%, transparent 50%);
+}
+
+/* Track with perspective */
+.rr-track-wrap {
+    position: absolute;
+    bottom: 0;
+    left: 50%;
+    transform: translateX(-50%);
+    width: 100%;
+    height: 70%;
+    perspective: 500px;
+    z-index: 2;
+    overflow: hidden;
+}
+.rr-track-surface {
+    position: absolute;
+    bottom: -20%;
+    left: 50%;
+    transform: translateX(-50%) rotateX(60deg);
+    width: 140%;
+    height: 140%;
+    background: linear-gradient(180deg,
+        transparent 0%,
+        rgba(255,0,170,0.05) 20%,
+        rgba(255,85,0,0.08) 50%,
+        rgba(255,0,170,0.12) 100%);
+    border-left: 2px solid rgba(255,0,170,0.3);
+    border-right: 2px solid rgba(255,0,170,0.3);
+}
+.rr-track-lane {
+    position: absolute;
+    top: 0;
+    bottom: 0;
+    width: 2px;
+    background: linear-gradient(180deg, transparent, rgba(255,0,170,0.25), transparent);
+}
+.rr-track-lane.left { left: 33%; }
+.rr-track-lane.center { left: 50%; transform: translateX(-50%); }
+.rr-track-lane.right { right: 33%; }
+.rr-track-glow {
+    position: absolute;
+    bottom: 0;
+    left: 50%;
+    transform: translateX(-50%);
+    width: 40%;
+    height: 100%;
+    background: linear-gradient(180deg, transparent 60%, rgba(255,0,170,0.08) 100%);
+    pointer-events: none;
+}
+.rr-track-grid {
+    position: absolute;
+    bottom: -10%;
+    left: 50%;
+    transform: translateX(-50%) rotateX(60deg);
+    width: 120%;
+    height: 120%;
+    background-image:
+        linear-gradient(rgba(255,0,170,0.15) 1px, transparent 1px),
+        linear-gradient(90deg, rgba(255,0,170,0.15) 1px, transparent 1px);
+    background-size: 60px 60px;
+    animation: rrGridScroll 0.6s linear infinite;
+    pointer-events: none;
+}
+@keyframes rrGridScroll {
+    0% { background-position: 0 0; }
+    100% { background-position: 0 60px; }
+}
+.rr-track-chevrons {
+    position: absolute;
+    bottom: 10%;
+    left: 50%;
+    transform: translateX(-50%);
+    width: 20%;
+    height: 80%;
+    z-index: 3;
+    pointer-events: none;
+}
+.rr-chevron {
+    position: absolute;
+    left: 50%;
+    transform: translateX(-50%);
+    width: 40px;
+    height: 20px;
+    border-left: 3px solid rgba(255,85,0,0.5);
+    border-bottom: 3px solid rgba(255,85,0,0.5);
+    transform: translateX(-50%) rotate(-45deg);
+    opacity: 0;
+    animation: rrChevronMove 1.2s linear forwards;
+}
+@keyframes rrChevronMove {
+    0% { bottom: 80%; opacity: 0; transform: translateX(-50%) rotate(-45deg) scale(0.3); }
+    15% { opacity: 1; }
+    100% { bottom: -10%; opacity: 0; transform: translateX(-50%) rotate(-45deg) scale(1.5); }
+}
+
+/* Rocket */
+.rr-rocket {
+    position: absolute;
+    bottom: 18%;
+    left: 50%;
+    transform: translateX(-50%);
+    width: 80px;
+    height: 140px;
+    z-index: 10;
     transition: transform 0.15s ease;
 }
-.rocket-body {
-    width: 60px;
-    height: 100px;
-    background: linear-gradient(180deg, #e8e8e8 0%, #c0c0c0 40%, #888 100%);
-    border-radius: 50% 50% 40% 40%;
+.rr-rocket-body {
     position: relative;
-    box-shadow: 0 4px 20px rgba(255,0,170,0.3), inset 0 -4px 8px rgba(0,0,0,0.2);
+    width: 100%;
+    height: 100%;
 }
-.rocket-body::before {
-    content: '';
+.rr-rocket-nose {
     position: absolute;
-    width: 24px;
-    height: 40px;
-    background: linear-gradient(180deg, #333, #111);
-    border-radius: 50%;
-    top: 12px;
+    top: 0;
     left: 50%;
     transform: translateX(-50%);
-}
-.rocket-body::after {
-    content: '';
-    position: absolute;
     width: 36px;
-    height: 16px;
-    background: linear-gradient(90deg, #ff3333, #cc0000);
-    border-radius: 4px;
-    bottom: -6px;
-    left: 50%;
-    transform: translateX(-50%);
+    height: 50px;
+    background: linear-gradient(180deg, #f0f0f0 0%, #c0c0c0 60%, #888 100%);
+    border-radius: 50% 50% 30% 30%;
+    box-shadow: inset 0 -2px 6px rgba(0,0,0,0.2), 0 2px 8px rgba(255,0,170,0.15);
 }
-.rocket-flame {
+.rr-rocket-cockpit {
     position: absolute;
-    bottom: -30px;
+    top: 18px;
     left: 50%;
     transform: translateX(-50%);
     width: 20px;
-    height: 30px;
-    background: linear-gradient(180deg, #ffdd00, #ff6600, #ff0000);
+    height: 28px;
+    background: linear-gradient(180deg, #00d4ff, #0077b6);
     border-radius: 50% 50% 40% 40%;
-    opacity: 0.9;
-    animation: rocketFlameFlicker 0.1s ease infinite alternate;
+    box-shadow: 0 0 12px rgba(0,212,255,0.5), inset 0 2px 4px rgba(255,255,255,0.3);
 }
-@keyframes rocketFlameFlicker {
-    0% { transform: translateX(-50%) scaleY(1) scaleX(1); }
-    100% { transform: translateX(-50%) scaleY(1.3) scaleX(0.9); }
-}
-.rocket-mult {
+.rr-rocket-fin {
     position: absolute;
-    top: 15%;
+    bottom: 30px;
+    width: 28px;
+    height: 40px;
+    background: linear-gradient(145deg, #888, #555);
+    border-radius: 0 0 40% 40%;
+}
+.rr-rocket-fin.left { left: 4px; transform: rotate(15deg); }
+.rr-rocket-fin.right { right: 4px; transform: rotate(-15deg); }
+.rr-rocket-engine {
+    position: absolute;
+    bottom: 20px;
     left: 50%;
     transform: translateX(-50%);
-    font-family: var(--font-display);
-    font-size: 4rem;
-    font-weight: 700;
-    color: #fff;
-    text-shadow: 0 0 40px rgba(255,0,170,0.6), 0 0 80px rgba(255,85,0,0.3);
-    z-index: 10;
-    transition: transform 0.1s;
+    width: 32px;
+    height: 20px;
+    background: linear-gradient(180deg, #ff4444, #cc0000);
+    border-radius: 4px;
+    box-shadow: 0 0 16px rgba(255,68,68,0.4);
 }
-.rocket-mult.pulse {
-    animation: rocketMultPulse 0.15s ease;
+.rr-rocket-flame {
+    position: absolute;
+    bottom: -40px;
+    left: 50%;
+    transform: translateX(-50%);
+    width: 28px;
+    height: 50px;
+    z-index: -1;
+    transition: transform 0.2s ease;
 }
-@keyframes rocketMultPulse {
-    0% { transform: translateX(-50%) scale(1); }
-    50% { transform: translateX(-50%) scale(1.15); }
-    100% { transform: translateX(-50%) scale(1); }
-}
-.rocket-obstacles {
+.rr-flame-core {
     position: absolute;
     inset: 0;
+    background: linear-gradient(180deg, #ffdd00 0%, #ff6600 40%, #ff0000 100%);
+    border-radius: 50% 50% 40% 40%;
+    filter: blur(2px);
+    animation: rrFlameFlicker 0.08s ease infinite alternate;
+}
+.rr-flame-outer {
+    position: absolute;
+    inset: -8px;
+    background: linear-gradient(180deg, rgba(255,170,0,0.4) 0%, rgba(255,68,0,0.2) 60%, transparent 100%);
+    border-radius: 50% 50% 40% 40%;
+    filter: blur(6px);
+    animation: rrFlameFlicker 0.12s ease infinite alternate;
+}
+@keyframes rrFlameFlicker {
+    0% { transform: scaleY(1) scaleX(1); }
+    100% { transform: scaleY(1.25) scaleX(0.92); }
+}
+.rr-rocket-shadow {
+    position: absolute;
+    bottom: -8px;
+    left: 50%;
+    transform: translateX(-50%);
+    width: 50px;
+    height: 12px;
+    background: rgba(0,0,0,0.4);
+    border-radius: 50%;
+    filter: blur(4px);
+}
+
+/* Rocket states */
+.rr-rocket.idle {
+    animation: rrRocketIdle 3s ease-in-out infinite;
+}
+@keyframes rrRocketIdle {
+    0%,100% { transform: translateX(-50%) translateY(0); }
+    50% { transform: translateX(-50%) translateY(-6px); }
+}
+.rr-rocket.running {
+    animation: rrRocketVibrate 0.15s linear infinite;
+}
+@keyframes rrRocketVibrate {
+    0%,100% { transform: translateX(-50%) translateY(0); }
+    50% { transform: translateX(-50%) translateY(1px); }
+}
+.rr-rocket.boosting {
+    transform: translateX(-50%) translateY(-10px) scale(1.05);
+}
+.rr-rocket.crashed {
+    animation: rrRocketCrash 0.6s ease forwards;
+}
+@keyframes rrRocketCrash {
+    0% { transform: translateX(-50%) rotate(0deg) scale(1); }
+    40% { transform: translateX(-50%) rotate(20deg) scale(1.1); }
+    100% { transform: translateX(-50%) rotate(45deg) scale(0.6); opacity: 0.3; }
+}
+.rr-rocket.cashedout {
+    animation: rrRocketEscape 0.8s var(--ease-out-expo) forwards;
+}
+@keyframes rrRocketEscape {
+    0% { transform: translateX(-50%) translateY(0); }
+    100% { transform: translateX(-50%) translateY(-200px) scale(0.8); opacity: 0; }
+}
+
+/* Flame states */
+.rr-rocket.boosting .rr-rocket-flame {
+    transform: translateX(-50%) scaleY(1.8) scaleX(1.2);
+}
+.rr-rocket.crashed .rr-rocket-flame {
+    opacity: 0;
+    transition: opacity 0.2s;
+}
+
+/* Track objects */
+.rr-objects {
+    position: absolute;
+    inset: 0;
+    z-index: 5;
     pointer-events: none;
-    z-index: 3;
 }
-.rocket-obstacle {
+.rr-obj {
     position: absolute;
-    width: 40px;
-    height: 40px;
+    animation: rrObjMove 2s linear forwards;
+    pointer-events: none;
+}
+@keyframes rrObjMove {
+    0% { transform: translate(-50%, -50%) scale(0.2); opacity: 0; }
+    10% { opacity: 1; }
+    100% { transform: translate(-50%, 300px) scale(1.8); opacity: 0; }
+}
+.rr-obj-coin {
+    width: 28px;
+    height: 28px;
+    background: linear-gradient(135deg, #ffd700, #ffaa00);
+    border-radius: 50%;
+    box-shadow: 0 0 16px rgba(255,215,0,0.5);
+}
+.rr-obj-obstacle {
+    width: 36px;
+    height: 36px;
     background: linear-gradient(135deg, #ff0044, #880022);
-    border-radius: 8px;
-    animation: rocketObsMove 1.5s linear forwards;
+    border-radius: 6px;
     box-shadow: 0 0 20px rgba(255,0,68,0.5);
-}
-.rocket-obstacle::before {
-    content: '✕';
-    position: absolute;
-    inset: 0;
     display: flex;
     align-items: center;
     justify-content: center;
     color: #fff;
-    font-size: 1.2rem;
+    font-size: 1rem;
     font-weight: 700;
 }
-@keyframes rocketObsMove {
-    0% { transform: translate(200px, -100px) scale(0.5); opacity: 0; }
-    20% { opacity: 1; }
-    100% { transform: translate(-50px, 200px) scale(1.5); opacity: 0; }
-}
-.rocket-coins {
-    position: absolute;
-    inset: 0;
-    pointer-events: none;
-    z-index: 4;
-}
-.rocket-coin {
-    position: absolute;
-    width: 24px;
-    height: 24px;
-    background: linear-gradient(135deg, #ffd700, #ffaa00);
+.rr-obj-boost {
+    width: 32px;
+    height: 32px;
+    background: linear-gradient(135deg, #00ff88, #00cc66);
     border-radius: 50%;
-    animation: rocketCoinMove 2s linear forwards;
-    box-shadow: 0 0 12px rgba(255,215,0,0.5);
+    box-shadow: 0 0 20px rgba(0,255,136,0.5);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 0.9rem;
 }
-@keyframes rocketCoinMove {
-    0% { transform: translate(300px, -50px) scale(0.5); opacity: 0; }
-    20% { opacity: 1; }
-    100% { transform: translate(-100px, 250px) scale(1); opacity: 0; }
-}
-.rocket-crash-flash {
+
+/* Speed lines */
+.rr-speedlines {
     position: absolute;
     inset: 0;
-    background: rgba(255,0,0,0.6);
+    z-index: 6;
+    pointer-events: none;
+    overflow: hidden;
+}
+.rr-speedline {
+    position: absolute;
+    width: 2px;
+    background: linear-gradient(180deg, transparent, rgba(255,255,255,0.4), transparent);
+    animation: rrSpeedlineMove 0.4s linear forwards;
+}
+@keyframes rrSpeedlineMove {
+    0% { transform: translateY(-100px) scaleY(0.5); opacity: 0; }
+    30% { opacity: 0.6; }
+    100% { transform: translateY(400px) scaleY(2); opacity: 0; }
+}
+
+/* Particles */
+.rr-particles {
+    position: absolute;
+    inset: 0;
+    z-index: 12;
+    pointer-events: none;
+}
+.rr-particle {
+    position: absolute;
+    border-radius: 50%;
+    animation: rrParticleFade 0.8s ease forwards;
+}
+@keyframes rrParticleFade {
+    0% { transform: translate(0,0) scale(1); opacity: 1; }
+    100% { transform: translate(var(--px), var(--py)) scale(0); opacity: 0; }
+}
+
+/* HUD */
+.rr-hud {
+    position: absolute;
+    top: 8%;
+    left: 50%;
+    transform: translateX(-50%);
+    z-index: 20;
+    text-align: center;
+    pointer-events: none;
+}
+.rr-hud-mult {
+    font-family: var(--font-display);
+    font-size: 4.5rem;
+    font-weight: 800;
+    color: #fff;
+    text-shadow: 0 0 40px rgba(255,0,170,0.5), 0 0 80px rgba(0,0,0,0.5);
+    line-height: 1;
+    transition: color 0.3s;
+}
+.rr-hud-mult.low { color: #fff; }
+.rr-hud-mult.mid { color: #ffdd00; text-shadow: 0 0 40px rgba(255,221,0,0.5); }
+.rr-hud-mult.high { color: #ff8800; text-shadow: 0 0 40px rgba(255,136,0,0.5); }
+.rr-hud-mult.danger { color: #ff0044; text-shadow: 0 0 50px rgba(255,0,68,0.6); }
+.rr-hud-status {
+    font-family: var(--font-mono);
+    font-size: 0.75rem;
+    letter-spacing: 0.15em;
+    color: rgba(255,255,255,0.5);
+    margin-top: 6px;
+}
+
+/* Overlays */
+.rr-overlay {
+    position: absolute;
+    inset: 0;
+    z-index: 25;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
     opacity: 0;
     pointer-events: none;
-    z-index: 20;
-    transition: opacity 0.1s;
+    transition: opacity 0.3s;
 }
-.rocket-crash-flash.show { opacity: 1; }
+.rr-overlay.show {
+    opacity: 1;
+}
+.rr-overlay.cashout {
+    background: radial-gradient(circle, rgba(57,255,20,0.15) 0%, transparent 70%);
+}
+.rr-overlay.crash {
+    background: radial-gradient(circle, rgba(255,0,68,0.2) 0%, transparent 70%);
+}
+.rr-overlay-text {
+    font-family: var(--font-display);
+    font-size: 2.5rem;
+    font-weight: 800;
+    letter-spacing: 0.05em;
+    text-shadow: 0 4px 20px rgba(0,0,0,0.8);
+}
+.rr-overlay.cashout .rr-overlay-text { color: var(--neon); }
+.rr-overlay.crash .rr-overlay-text { color: var(--hot); }
+.rr-overlay-sub {
+    font-family: var(--font-mono);
+    font-size: 1.2rem;
+    margin-top: 8px;
+    color: rgba(255,255,255,0.8);
+}
+
+/* Flash */
+.rr-flash {
+    position: absolute;
+    inset: 0;
+    z-index: 30;
+    pointer-events: none;
+    opacity: 0;
+    transition: opacity 0.15s;
+}
+.rr-flash.red { background: rgba(255,0,68,0.5); }
+.rr-flash.green { background: rgba(57,255,20,0.3); }
+.rr-flash.show { opacity: 1; }
+
+/* Heat UI in panel */
+.rr-heat-container {
+    display: flex;
+    flex-direction: column;
+    gap: 6px;
+}
+.rr-heat-bar {
+    width: 100%;
+    height: 10px;
+    background: var(--deep);
+    border-radius: 5px;
+    overflow: hidden;
+    border: 1px solid var(--border);
+}
+.rr-heat-fill {
+    height: 100%;
+    width: 0%;
+    background: linear-gradient(90deg, #00ff88, #ffdd00, #ff0044);
+    border-radius: 5px;
+    transition: width 0.1s linear;
+}
+.rr-heat-label {
+    font-size: 0.7rem;
+    font-family: var(--font-mono);
+    color: var(--text-tertiary);
+    text-align: center;
+    letter-spacing: 0.05em;
+}
+.rr-heat-label.hot { color: #ffdd00; }
+.rr-heat-label.overheat { color: #ff0044; }
+
+/* Auto cashout */
 .rocket-auto-wrap {
     display: flex;
     align-items: center;
@@ -7934,7 +8250,8 @@ body:hover .cursor-glow {
     .mines-grid { max-width: 300px; }
     .dungeon-door { width: 80px; height: 140px; }
     .dungeon-hall { gap: 12px; }
-    .rocket-mult { font-size: 2.5rem; }
+    .rr-hud-mult { font-size: 2.8rem; }
+    .rr-rocket { width: 55px; height: 100px; bottom: 15%; }
     .treasure-sub-body { width: 60px; height: 40px; }
     .meteor-field { grid-template-columns: repeat(3, 1fr); gap: 10px; }
     .meteor-rock { width: 60px; height: 60px; }

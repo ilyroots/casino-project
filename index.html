@@ -10,7 +10,7 @@
     <link rel="preconnect" href="https://fonts.googleapis.com">
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
     <link href="https://fonts.googleapis.com/css2?family=Tektur:wght@400;500;600;700;800;900&family=Hanken+Grotesk:wght@300;400;500;600;700;800&family=Azeret+Mono:wght@400;500;600;700&display=swap" rel="stylesheet">
-    <link rel="stylesheet" href="css/style.css?v=12">
+    <link rel="stylesheet" href="css/style.css?v=13">
     <script src="https://cdn.socket.io/4.5.4/socket.io.min.js"></script>
 </head>
 <body>
@@ -1152,8 +1152,16 @@
                                     </div>
                                     <div class="rocket-auto-hint" id="rocketAutoHint">Off</div>
                                 </div>
+                                <div class="game-control-group">
+                                    <label class="game-control-label">Engine Heat</label>
+                                    <div class="rr-heat-container">
+                                        <div class="rr-heat-bar"><div class="rr-heat-fill" id="rocketHeatFill"></div></div>
+                                        <div class="rr-heat-label" id="rocketHeatLabel">COOL</div>
+                                    </div>
+                                </div>
                                 <button class="game-play-btn" id="rocketPlayBtn">Launch</button>
                                 <button class="game-play-btn hidden" id="rocketCashoutBtn" style="background:var(--neon);color:#000;">Cash Out</button>
+                                <button class="game-play-btn hidden" id="rocketBoostBtn" style="background:linear-gradient(145deg,#ff0044,#ff5500);color:#fff;">🔥 BOOST</button>
                                 <div class="game-history-area">
                                     <div class="game-history-header"><span>History</span><button class="game-history-clear" data-game="rocket">Clear</button></div>
                                     <div class="game-history-list" id="rocketHistoryList"></div>
@@ -1161,20 +1169,65 @@
                             </div>
                         </div>
                         <div class="game-stage" id="rocketStage">
-                            <div class="rocket-scene" id="rocketScene">
-                                <div class="rocket-track" id="rocketTrack">
-                                    <div class="rocket-track-line"></div>
-                                    <div class="rocket-track-line"></div>
-                                    <div class="rocket-track-line"></div>
+                            <div class="rr-scene" id="rrScene" tabindex="0">
+                                <!-- Background -->
+                                <div class="rr-bg" id="rrBg"></div>
+                                <div class="rr-stars" id="rrStars"></div>
+                                <div class="rr-nebula" id="rrNebula"></div>
+
+                                <!-- Track -->
+                                <div class="rr-track-wrap" id="rrTrackWrap">
+                                    <div class="rr-track-surface" id="rrTrackSurface">
+                                        <div class="rr-track-lane left"></div>
+                                        <div class="rr-track-lane center"></div>
+                                        <div class="rr-track-lane right"></div>
+                                        <div class="rr-track-glow"></div>
+                                    </div>
+                                    <div class="rr-track-chevrons" id="rrChevrons"></div>
+                                    <div class="rr-track-grid" id="rrTrackGrid"></div>
                                 </div>
-                                <div class="rocket-craft" id="rocketCraft">
-                                    <div class="rocket-body"></div>
-                                    <div class="rocket-flame" id="rocketFlame"></div>
+
+                                <!-- Track Objects -->
+                                <div class="rr-objects" id="rrObjects"></div>
+
+                                <!-- Rocket -->
+                                <div class="rr-rocket" id="rrRocket">
+                                    <div class="rr-rocket-body">
+                                        <div class="rr-rocket-nose"></div>
+                                        <div class="rr-rocket-cockpit"></div>
+                                        <div class="rr-rocket-fin left"></div>
+                                        <div class="rr-rocket-fin right"></div>
+                                        <div class="rr-rocket-engine"></div>
+                                    </div>
+                                    <div class="rr-rocket-flame" id="rrRocketFlame">
+                                        <div class="rr-flame-core"></div>
+                                        <div class="rr-flame-outer"></div>
+                                    </div>
+                                    <div class="rr-rocket-shadow"></div>
                                 </div>
-                                <div class="rocket-obstacles" id="rocketObstacles"></div>
-                                <div class="rocket-coins" id="rocketCoins"></div>
-                                <div class="rocket-mult" id="rocketMult">1.00×</div>
-                                <div class="rocket-crash-flash" id="rocketCrashFlash"></div>
+
+                                <!-- Speed Lines -->
+                                <div class="rr-speedlines" id="rrSpeedlines"></div>
+
+                                <!-- Particles -->
+                                <div class="rr-particles" id="rrParticles"></div>
+
+                                <!-- HUD -->
+                                <div class="rr-hud" id="rrHud">
+                                    <div class="rr-hud-mult" id="rrHudMult">1.00×</div>
+                                    <div class="rr-hud-status" id="rrHudStatus">READY</div>
+                                </div>
+
+                                <!-- Overlays -->
+                                <div class="rr-overlay cashout" id="rrCashoutOverlay">
+                                    <div class="rr-overlay-text">CASHED OUT</div>
+                                    <div class="rr-overlay-sub" id="rrCashoutSub">2.50×</div>
+                                </div>
+                                <div class="rr-overlay crash" id="rrCrashOverlay">
+                                    <div class="rr-overlay-text">CRASHED</div>
+                                    <div class="rr-overlay-sub" id="rrCrashSub">at 3.20×</div>
+                                </div>
+                                <div class="rr-flash" id="rrFlash"></div>
                             </div>
                         </div>
                     </div>
@@ -2514,7 +2567,7 @@
     <!-- Toast Notification -->
     <div class="toast-container" id="toastContainer"></div>
 
-    <script src="js/main.js?v=8"></script>
+    <script src="js/main.js?v=9"></script>
     <script src="js/roulette.js?v=4"></script>
     <script src="js/poker.js?v=5"></script>
     <script src="js/texasholdem.js?v=4"></script>

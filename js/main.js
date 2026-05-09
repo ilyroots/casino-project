@@ -2658,14 +2658,30 @@
     }
 
     // ═══════════════════════════════════════════════
-    // ROCKET RUNNER GAME
+    // ROCKET RUNNER GAME v2
     // ═══════════════════════════════════════════════
+    const RR_CONFIG = {
+        baseGrowth: 0.12,
+        boostGrowth: 0.38,
+        accelerationFactor: 0.06,
+        heatGainPerSecond: 38,
+        heatCoolPerSecond: 16,
+        overheatCooldownMs: 1000,
+        cashoutResetDelayMs: 1400,
+        crashResetDelayMs: 1800,
+    };
+
     let rocketBet = 10, rocketHistory = [], rocketNonce = 0;
     let rocketMult = 1.0, rocketCrashPoint = 1.0;
-    let rocketAnimId = null, rocketStartTime = 0;
+    let rocketAnimId = null, rocketLastFrame = 0, rocketElapsed = 0;
     let rocketInProgress = false, rocketCashedOut = false;
+    let rocketState = 'idle'; // idle | launching | running | cashed-out | crashed | cooldown
+    let rocketHeat = 0, rocketOverheated = false, rocketOverheatUntil = 0;
+    let rocketIsBoosting = false;
     let rocketSeeds = { server: gameGenerateSeed(), client: gameGenerateSeed() };
+    let rrObjSpawnTimer = 0, rrChevronTimer = 0, rrSpeedlineTimer = 0;
 
+    // TODO: Replace client-side crash generation with backend/provably fair server result.
     function generateRocketCrashPoint() {
         const r = Math.random();
         if (r < 0.35) return 1.01 + Math.random() * 0.49;
@@ -2675,83 +2691,208 @@
         return 10.01 + Math.random() * 9.99;
     }
 
-    function updateRocketMultDisplay() {
-        const el = $('#rocketMult');
-        if (el) el.textContent = rocketMult.toFixed(2) + '×';
+    function rrSetState(state) {
+        rocketState = state;
+        const rocket = $('#rrRocket');
+        const status = $('#rrHudStatus');
+        if (rocket) {
+            rocket.className = 'rr-rocket ' + state;
+        }
+        if (status) {
+            const labels = {
+                idle: 'READY', launching: 'IGNITION', running: 'RUNNING',
+                'cashed-out': 'ESCAPED', crashed: 'CRASHED', cooldown: 'COOLDOWN'
+            };
+            status.textContent = labels[state] || state.toUpperCase();
+        }
     }
 
-    function spawnRocketObstacles() {
-        const container = $('#rocketObstacles');
+    function rrUpdateHud() {
+        const multEl = $('#rrHudMult');
+        if (multEl) {
+            multEl.textContent = rocketMult.toFixed(2) + '×';
+            multEl.className = 'rr-hud-mult';
+            if (rocketMult >= 5) multEl.classList.add('danger');
+            else if (rocketMult >= 3) multEl.classList.add('high');
+            else if (rocketMult >= 1.5) multEl.classList.add('mid');
+            else multEl.classList.add('low');
+        }
+        const heatFill = $('#rocketHeatFill');
+        const heatLabel = $('#rocketHeatLabel');
+        if (heatFill) heatFill.style.width = Math.min(100, rocketHeat) + '%';
+        if (heatLabel) {
+            heatLabel.textContent = rocketOverheated ? 'BOOST COOLDOWN' : rocketHeat > 70 ? 'ENGINE HOT' : rocketHeat > 40 ? 'WARM' : 'COOL';
+            heatLabel.className = 'rr-heat-label' + (rocketOverheated ? ' overheat' : rocketHeat > 70 ? ' hot' : '');
+        }
+    }
+
+    function rrSpawnStars() {
+        const container = $('#rrStars');
         if (!container) return;
         container.innerHTML = '';
-        for (let i = 0; i < 3; i++) {
-            const obs = document.createElement('div');
-            obs.className = 'rocket-obstacle';
-            obs.style.left = (30 + Math.random() * 40) + '%';
-            obs.style.top = (20 + Math.random() * 30) + '%';
-            obs.style.animationDelay = (i * 0.3) + 's';
-            obs.style.animationDuration = (1.2 + Math.random() * 0.8) + 's';
-            container.appendChild(obs);
-            setTimeout(() => obs.remove(), 2000);
+        for (let i = 0; i < 40; i++) {
+            const s = document.createElement('div');
+            s.className = 'rr-star';
+            s.style.left = Math.random() * 100 + '%';
+            s.style.top = Math.random() * 60 + '%';
+            s.style.animationDelay = Math.random() * 2 + 's';
+            container.appendChild(s);
         }
     }
 
-    function spawnRocketCoins() {
-        const container = $('#rocketCoins');
+    function rrSpawnChevron() {
+        const container = $('#rrChevrons');
         if (!container) return;
-        for (let i = 0; i < 4; i++) {
-            const coin = document.createElement('div');
-            coin.className = 'rocket-coin';
-            coin.style.left = (20 + Math.random() * 60) + '%';
-            coin.style.top = (10 + Math.random() * 40) + '%';
-            coin.style.animationDelay = (i * 0.2) + 's';
-            container.appendChild(coin);
-            setTimeout(() => coin.remove(), 2200);
+        const c = document.createElement('div');
+        c.className = 'rr-chevron';
+        container.appendChild(c);
+        setTimeout(() => c.remove(), 1300);
+    }
+
+    function rrSpawnObject() {
+        const container = $('#rrObjects');
+        if (!container) return;
+        const types = ['coin', 'coin', 'coin', 'obstacle', 'boost'];
+        const type = types[Math.floor(Math.random() * types.length)];
+        const obj = document.createElement('div');
+        obj.className = 'rr-obj rr-obj-' + type;
+        const lanes = [25, 50, 75];
+        obj.style.left = lanes[Math.floor(Math.random() * lanes.length)] + '%';
+        obj.style.top = '30%';
+        if (type === 'obstacle') obj.textContent = '✕';
+        if (type === 'boost') obj.textContent = '⚡';
+        container.appendChild(obj);
+        setTimeout(() => obj.remove(), 2200);
+    }
+
+    function rrSpawnSpeedline() {
+        const container = $('#rrSpeedlines');
+        if (!container) return;
+        const sl = document.createElement('div');
+        sl.className = 'rr-speedline';
+        sl.style.left = (10 + Math.random() * 80) + '%';
+        sl.style.top = '-20px';
+        sl.style.height = (40 + Math.random() * 80) + 'px';
+        sl.style.animationDuration = (0.2 + Math.random() * 0.3) + 's';
+        container.appendChild(sl);
+        setTimeout(() => sl.remove(), 600);
+    }
+
+    function rrSpawnParticles(x, y, count, color) {
+        const container = $('#rrParticles');
+        if (!container) return;
+        for (let i = 0; i < count; i++) {
+            const p = document.createElement('div');
+            p.className = 'rr-particle';
+            p.style.left = x + 'px';
+            p.style.top = y + 'px';
+            p.style.width = (3 + Math.random() * 5) + 'px';
+            p.style.height = p.style.width;
+            p.style.background = color;
+            const angle = (Math.PI * 2 * i) / count + (Math.random() - 0.5);
+            const dist = 30 + Math.random() * 80;
+            p.style.setProperty('--px', Math.cos(angle) * dist + 'px');
+            p.style.setProperty('--py', Math.sin(angle) * dist + 'px');
+            container.appendChild(p);
+            setTimeout(() => p.remove(), 800);
         }
     }
 
-    function rocketFrame(ts) {
-        if (!rocketInProgress) return;
-        if (!rocketStartTime) rocketStartTime = ts;
-        const elapsed = (ts - rocketStartTime) / 1000;
-        const baseSpeed = 0.15;
-        const acceleration = 0.08;
-        rocketMult = 1 + elapsed * baseSpeed + Math.pow(elapsed, 1.45) * acceleration;
-        updateRocketMultDisplay();
+    function rrShakeScreen(intensity) {
+        const scene = $('#rrScene');
+        if (!scene) return;
+        const dx = (Math.random() - 0.5) * intensity;
+        const dy = (Math.random() - 0.5) * intensity;
+        scene.style.transform = `translate(${dx}px, ${dy}px)`;
+        setTimeout(() => { scene.style.transform = ''; }, 50);
+    }
 
-        const multEl = $('#rocketMult');
-        if (multEl) {
-            multEl.classList.add('pulse');
-            setTimeout(() => multEl.classList.remove('pulse'), 150);
+    function rrSetTrackSpeed(speedMult) {
+        const grid = $('#rrTrackGrid');
+        if (grid) grid.style.animationDuration = Math.max(0.1, 0.6 / speedMult) + 's';
+    }
+
+    function rrGameLoop(ts) {
+        if (!rocketInProgress) return;
+        if (!rocketLastFrame) { rocketLastFrame = ts; rocketElapsed = 0; }
+        const delta = (ts - rocketLastFrame) / 1000;
+        rocketLastFrame = ts;
+        rocketElapsed += delta;
+
+        // Heat management
+        const now = Date.now();
+        if (rocketOverheated && now >= rocketOverheatUntil) {
+            rocketOverheated = false;
         }
+        if (rocketIsBoosting && !rocketOverheated) {
+            rocketHeat = Math.min(100, rocketHeat + RR_CONFIG.heatGainPerSecond * delta);
+            if (rocketHeat >= 100) {
+                rocketOverheated = true;
+                rocketOverheatUntil = now + RR_CONFIG.overheatCooldownMs;
+                rocketIsBoosting = false;
+            }
+        } else {
+            rocketHeat = Math.max(0, rocketHeat - RR_CONFIG.heatCoolPerSecond * delta);
+        }
+
+        // Multiplier growth
+        const isBoosting = rocketIsBoosting && !rocketOverheated;
+        const base = RR_CONFIG.baseGrowth;
+        const boost = isBoosting ? RR_CONFIG.boostGrowth : 0;
+        const accel = Math.pow(rocketElapsed, 1.25) * RR_CONFIG.accelerationFactor;
+        const growth = (base + boost + accel) * delta;
+        rocketMult += growth;
 
         // Auto cashout
         const autoVal = parseFloat($('#rocketAutoCashout')?.value) || 0;
         if (autoVal > 1.01 && rocketMult >= autoVal && !rocketCashedOut) {
-            cashoutRocket();
+            rrCashout();
             return;
         }
 
+        // Crash check
         if (rocketMult >= rocketCrashPoint) {
-            rocketCrash();
+            rocketMult = rocketCrashPoint;
+            rrCrash();
             return;
         }
 
-        // Spawn visuals
-        if (Math.random() < 0.03) spawnRocketObstacles();
-        if (Math.random() < 0.04) spawnRocketCoins();
+        // Visuals
+        rrUpdateHud();
+        rrSetTrackSpeed(isBoosting ? 2.5 : 1.0);
 
-        // Flame intensity
-        const flame = $('#rocketFlame');
-        if (flame) {
-            const intensity = Math.min(1.5, 1 + elapsed * 0.1);
-            flame.style.transform = `translateX(-50%) scaleY(${intensity})`;
+        // Spawn chevrons
+        rrChevronTimer += delta;
+        if (rrChevronTimer > (isBoosting ? 0.3 : 0.6)) {
+            rrSpawnChevron();
+            rrChevronTimer = 0;
         }
 
-        rocketAnimId = requestAnimationFrame(rocketFrame);
+        // Spawn objects
+        rrObjSpawnTimer += delta;
+        if (rrObjSpawnTimer > (isBoosting ? 0.4 : 0.8)) {
+            rrSpawnObject();
+            rrObjSpawnTimer = 0;
+        }
+
+        // Spawn speedlines
+        rrSpeedlineTimer += delta;
+        const speedlineInterval = isBoosting ? 0.04 : 0.12;
+        if (rrSpeedlineTimer > speedlineInterval) {
+            rrSpawnSpeedline();
+            if (isBoosting) rrSpawnSpeedline();
+            rrSpeedlineTimer = 0;
+        }
+
+        // Screen shake on boost
+        if (isBoosting) {
+            rrShakeScreen(rocketHeat > 70 ? 4 : 2);
+        }
+
+        rocketAnimId = requestAnimationFrame(rrGameLoop);
     }
 
-    function startRocket() {
+    function rrLaunch() {
         rocketBet = getGameBet('#rocketBetInput');
         if (rocketBet <= 0 || getBjBalanceUsd() <= 0) return;
         if (!bjDeductBet(rocketBet)) return;
@@ -2760,48 +2901,146 @@
         rocketMult = 1.0;
         rocketInProgress = true;
         rocketCashedOut = false;
-        rocketStartTime = 0;
-        updateRocketMultDisplay();
+        rocketHeat = 0;
+        rocketOverheated = false;
+        rocketIsBoosting = false;
+        rocketLastFrame = 0;
+        rocketElapsed = 0;
+        rrObjSpawnTimer = 0;
+        rrChevronTimer = 0;
+        rrSpeedlineTimer = 0;
+
+        // Reset visuals
+        $('#rrFlash')?.classList.remove('show', 'red', 'green');
+        $('#rrCashoutOverlay')?.classList.remove('show');
+        $('#rrCrashOverlay')?.classList.remove('show');
+        $('#rrObjects').innerHTML = '';
+        $('#rrSpeedlines').innerHTML = '';
+        $('#rrParticles').innerHTML = '';
+
+        // UI
         $('#rocketPlayBtn')?.classList.add('hidden');
         $('#rocketCashoutBtn')?.classList.remove('hidden');
-        $('#rocketCrashFlash')?.classList.remove('show');
+        $('#rocketBoostBtn')?.classList.remove('hidden');
         $('#rocketFairServer').textContent = rocketSeeds.server.slice(0,16)+'...';
         $('#rocketFairClient').textContent = rocketSeeds.client.slice(0,16)+'...';
         $('#rocketFairNonce').textContent = rocketNonce;
+
+        // Launch sequence
+        rrSetState('launching');
+        rrUpdateHud();
+        rrSetTrackSpeed(1);
         gamePlaySound('click');
-        rocketAnimId = requestAnimationFrame(rocketFrame);
+
+        setTimeout(() => {
+            rrSetState('running');
+            rocketAnimId = requestAnimationFrame(rrGameLoop);
+        }, 600);
     }
 
-    function cashoutRocket() {
+    function rrCashout() {
         if (!rocketInProgress || rocketCashedOut) return;
         rocketCashedOut = true;
         rocketInProgress = false;
         cancelAnimationFrame(rocketAnimId);
         const payout = rocketBet * rocketMult;
         bjAddWinnings(payout);
-        $('#rocketPlayBtn')?.classList.remove('hidden');
-        $('#rocketCashoutBtn')?.classList.add('hidden');
+
+        // Visuals
+        rrSetState('cashed-out');
+        const flash = $('#rrFlash');
+        if (flash) { flash.className = 'rr-flash green show'; setTimeout(() => flash.classList.remove('show'), 300); }
+        const overlay = $('#rrCashoutOverlay');
+        const sub = $('#rrCashoutSub');
+        if (overlay) overlay.classList.add('show');
+        if (sub) sub.textContent = rocketMult.toFixed(2) + '× · $' + payout.toFixed(2);
+        rrSpawnParticles(150, 200, 20, '#39ff14');
+        rrSetTrackSpeed(0.5);
+
         gameAddHistory('rocketHistoryList', 'win', rocketBet, payout);
         gamePlaySound('win');
+
+        setTimeout(() => {
+            if (overlay) overlay.classList.remove('show');
+            rrResetRound();
+        }, RR_CONFIG.cashoutResetDelayMs);
     }
 
-    function rocketCrash() {
+    function rrCrash() {
         rocketInProgress = false;
         cancelAnimationFrame(rocketAnimId);
-        $('#rocketCrashFlash')?.classList.add('show');
-        setTimeout(() => $('#rocketCrashFlash')?.classList.remove('show'), 400);
-        $('#rocketPlayBtn')?.classList.remove('hidden');
-        $('#rocketCashoutBtn')?.classList.add('hidden');
+
+        // Visuals
+        rrSetState('crashed');
+        const flash = $('#rrFlash');
+        if (flash) { flash.className = 'rr-flash red show'; setTimeout(() => flash.classList.remove('show'), 400); }
+        const overlay = $('#rrCrashOverlay');
+        const sub = $('#rrCrashSub');
+        if (overlay) overlay.classList.add('show');
+        if (sub) sub.textContent = 'at ' + rocketMult.toFixed(2) + '×';
+        rrShakeScreen(12);
+        rrSpawnParticles(150, 200, 30, '#ff4444');
+        rrSetTrackSpeed(0.2);
+
         gameAddHistory('rocketHistoryList', 'loss', rocketBet, 0);
         gamePlaySound('loss');
+
+        setTimeout(() => {
+            if (overlay) overlay.classList.remove('show');
+            rrResetRound();
+        }, RR_CONFIG.crashResetDelayMs);
+    }
+
+    function rrResetRound() {
+        rocketState = 'idle';
+        rocketIsBoosting = false;
+        rocketHeat = 0;
+        rocketOverheated = false;
+        rrSetState('idle');
+        rrUpdateHud();
+        rrSetTrackSpeed(0.3);
+        $('#rocketPlayBtn')?.classList.remove('hidden');
+        $('#rocketCashoutBtn')?.classList.add('hidden');
+        $('#rocketBoostBtn')?.classList.add('hidden');
+    }
+
+    function rrStartBoost() {
+        if (!rocketInProgress || rocketCashedOut || rocketState !== 'running') return;
+        if (rocketOverheated) return;
+        rocketIsBoosting = true;
+        rrSetState('running'); // keep running state, visual class handled by CSS
+    }
+    function rrStopBoost() {
+        rocketIsBoosting = false;
     }
 
     function initRocket() {
-        updateRocketMultDisplay();
+        rrSpawnStars();
+        rrSetState('idle');
+        rrUpdateHud();
+        rrSetTrackSpeed(0.3);
+
         $('#rocketBetInput')?.addEventListener('change', () => updateGameBet('#rocketBetInput', getGameBet('#rocketBetInput')));
         setupAmountMods('rocket', '#rocketBetInput');
-        $('#rocketPlayBtn')?.addEventListener('click', startRocket);
-        $('#rocketCashoutBtn')?.addEventListener('click', cashoutRocket);
+        $('#rocketPlayBtn')?.addEventListener('click', rrLaunch);
+        $('#rocketCashoutBtn')?.addEventListener('click', rrCashout);
+        $('#rocketBoostBtn')?.addEventListener('mousedown', rrStartBoost);
+        $('#rocketBoostBtn')?.addEventListener('mouseup', rrStopBoost);
+        $('#rocketBoostBtn')?.addEventListener('mouseleave', rrStopBoost);
+        $('#rocketBoostBtn')?.addEventListener('touchstart', (e) => { e.preventDefault(); rrStartBoost(); });
+        $('#rocketBoostBtn')?.addEventListener('touchend', (e) => { e.preventDefault(); rrStopBoost(); });
+
+        // Keyboard boost
+        const scene = $('#rrScene');
+        if (scene) {
+            scene.addEventListener('keydown', (e) => {
+                if (e.code === 'Space') { e.preventDefault(); rrStartBoost(); }
+            });
+            scene.addEventListener('keyup', (e) => {
+                if (e.code === 'Space') { e.preventDefault(); rrStopBoost(); }
+            });
+        }
+
         $('#rocketAutoCashout')?.addEventListener('input', (e) => {
             const hint = $('#rocketAutoHint');
             if (hint) hint.textContent = parseFloat(e.target.value) > 1 ? 'Active at ' + parseFloat(e.target.value).toFixed(2) + '×' : 'Off';
