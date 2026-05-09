@@ -710,7 +710,7 @@
             const view = viewMap[g.name];
             const clickable = view ? `data-nav="${view}" style="cursor:pointer;"` : '';
             return `
-            <div class="game-card" ${clickable} style="animation: cardFadeIn 0.5s var(--ease-out-expo) ${i * 0.04}s both">
+            <div class="game-card${g.image ? ' has-image' : ''}" ${clickable} style="animation: cardFadeIn 0.5s var(--ease-out-expo) ${i * 0.04}s both">
                 <div class="game-thumb" ${g.image ? `style="background-image:url('${g.image}')"` : ''}>${g.image ? '' : g.emoji}</div>
                 <div class="game-card-info">
                     <div class="game-card-title">${g.name}</div>

@@ -1193,6 +1193,12 @@ body:hover .cursor-glow {
 .game-card:hover::before {
     opacity: 0.4;
 }
+.game-card.has-image::before {
+    display: none;
+}
+.game-card.has-image .game-card-info {
+    display: none;
+}
 
 .game-thumb {
     position: absolute;
