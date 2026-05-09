@@ -1204,6 +1204,9 @@ body:hover .cursor-glow {
     transition: transform 0.5s var(--ease-out-expo);
     overflow: hidden;
     border-radius: inherit;
+    background-size: contain;
+    background-position: center;
+    background-repeat: no-repeat;
 }
 .game-thumb img {
     width: 100%;
