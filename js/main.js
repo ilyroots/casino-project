@@ -955,13 +955,14 @@
         return bjDeck.pop();
     }
 
-    function renderCard(card, hidden = false, delay = 0) {
+    function renderCard(card, hidden = false, delay = 0, flip = false) {
         const isRed = card.suit === '♥' || card.suit === '♦';
+        const flipClass = flip ? ' reveal-flip' : '';
         if (hidden) {
-            return `<div class="bj-card hidden dealing" style="animation-delay:${delay}s"></div>`;
+            return `<div class="bj-card hidden dealing${flipClass}" style="animation-delay:${delay}s"></div>`;
         }
         return `
-            <div class="bj-card ${isRed ? 'red' : 'black'} dealing" style="animation-delay:${delay}s">
+            <div class="bj-card ${isRed ? 'red' : 'black'} dealing${flipClass}" style="animation-delay:${delay}s">
                 <div class="bj-card-corner top-left">
                     <div class="bj-card-rank">${card.rank}</div>
                     <div class="bj-card-suit">${card.suit}</div>
@@ -975,9 +976,9 @@
         `;
     }
 
-    function renderHand(container, hand, hideFirst = false, baseDelay = 0) {
+    function renderHand(container, hand, hideFirst = false, baseDelay = 0, flipFirst = false) {
         if (!container) return;
-        container.innerHTML = hand.map((c, i) => renderCard(c, hideFirst && i === 0, baseDelay + i * 0.12)).join('');
+        container.innerHTML = hand.map((c, i) => renderCard(c, hideFirst && i === 0, baseDelay + i * 0.12, flipFirst && i === 0)).join('');
     }
 
     function updateHandValues() {
@@ -1230,9 +1231,9 @@
     }
 
     function dealerTurn() {
-        // Reveal hidden card
+        // Reveal hidden card with flip animation
         if (bjDealerHand[0]) bjDealerHand[0].hidden = false;
-        renderHand($('#dealerCards'), bjDealerHand);
+        renderHand($('#dealerCards'), bjDealerHand, false, 0, true);
         updateHandValues();
         bjPlaySound('deal');
 
@@ -1315,11 +1316,188 @@
         bjInProgress = false;
     }
 
+    // ─── Fake Stats / Live Bets Generation ───
+    const BJ_FAKE_USERS = [
+        'dillionaire','crypto_king','hidden','lucky7','whale_alert',
+        'satoshi_vibes','moon_boy','degengambler','highroller','cardshark',
+        'blaze_it','nft_flipping','diamond_hands','rekt_city','green_candle',
+        'alpha_wolf','degen_dave','stack_sats','all_in','poker_face'
+    ];
+    const BJ_FAKE_GAMES = [
+        { name: 'Dice', color: '#ff6b35', image: 'images/dice.png' },
+        { name: 'Plinko', color: '#4dabf7', image: 'images/plinko.png' },
+        { name: 'Mines', color: '#e03131', image: 'images/mines.png' },
+        { name: 'Crash', color: '#fa5252', image: 'images/crash.png' },
+        { name: 'Limbo', color: '#fab005', image: 'images/limbo.png' },
+        { name: 'Keno', color: '#7950f2', image: 'images/keno.png' },
+        { name: 'Hilo', color: '#40c057', image: 'images/hilo.png' },
+        { name: 'Blackjack', color: '#6b21a8', image: null }
+    ];
+
+    function bjRandUser() {
+        const u = BJ_FAKE_USERS[Math.floor(Math.random() * BJ_FAKE_USERS.length)];
+        return u.length > 8 ? u.slice(0, 6) + '...' : u;
+    }
+    function bjRandAmount() {
+        const amt = Math.pow(Math.random(), 2) * 250000 + 10;
+        return amt;
+    }
+    function bjRandMult() {
+        // Weighted toward lower multipliers
+        const r = Math.random();
+        if (r < 0.5) return (1 + Math.random() * 2).toFixed(2);
+        if (r < 0.8) return (2 + Math.random() * 8).toFixed(2);
+        if (r < 0.95) return (10 + Math.random() * 90).toFixed(2);
+        return (100 + Math.random() * 900).toFixed(2);
+    }
+    function bjRandDate() {
+        const months = ['Jan','Feb','Mar','Apr','May','Jun','Jul','Aug','Sep','Oct','Nov','Dec'];
+        const m = months[Math.floor(Math.random() * 12)];
+        const d = Math.floor(Math.random() * 28) + 1;
+        const h = Math.floor(Math.random() * 12) + 1;
+        const min = Math.floor(Math.random() * 60).toString().padStart(2, '0');
+        const ampm = Math.random() > 0.5 ? 'AM' : 'PM';
+        return `${m} ${d}, ${h}:${min} ${ampm}`;
+    }
+    function bjRandTimeAgo() {
+        const s = Math.floor(Math.random() * 60);
+        return `${s}s ago`;
+    }
+
+    function bjGenerateWinRow(rank) {
+        const bet = bjRandAmount();
+        const mult = parseFloat(bjRandMult());
+        const payout = bet * mult;
+        const user = bjRandUser();
+        const rankBadge = rank <= 3
+            ? `<span class="bj-stats-rank" style="${rank===1?'background:linear-gradient(135deg,#ffd700,#b8860b);color:#000;':rank===2?'background:linear-gradient(135deg,#c0c0c0,#808080);color:#000;':'background:linear-gradient(135deg,#cd7f32,#8b4513);color:#fff;'}">${rank}</span>`
+            : `<span class="bj-stats-rank">${rank}</span>`;
+        return `
+            <tr>
+                <td>${rankBadge}</td>
+                <td><div class="bj-stats-user"><div class="bj-stats-avatar">${user.slice(0,2).toUpperCase()}</div><span>${user}</span></div></td>
+                <td>$${bet.toLocaleString('en-US',{minimumFractionDigits:2,maximumFractionDigits:2})}</td>
+                <td class="bj-stats-mult">${mult.toFixed(2)}×</td>
+                <td class="bj-stats-payout">$${payout.toLocaleString('en-US',{minimumFractionDigits:2,maximumFractionDigits:2})}</td>
+                <td>${bjRandDate()}</td>
+            </tr>
+        `;
+    }
+
+    function bjRenderBigWins() {
+        const body = $('#bjBigWinsBody');
+        if (!body) return;
+        let rows = '';
+        for (let i = 1; i <= 8; i++) rows += bjGenerateWinRow(i);
+        body.innerHTML = rows;
+    }
+    function bjRenderLuckyWins() {
+        const body = $('#bjLuckyWinsBody');
+        if (!body) return;
+        let rows = '';
+        for (let i = 1; i <= 8; i++) {
+            const bet = bjRandAmount();
+            const mult = parseFloat(bjRandMult());
+            const payout = bet * mult;
+            const user = bjRandUser();
+            rows += `
+                <tr>
+                    <td><span class="bj-stats-rank">${i}</span></td>
+                    <td><div class="bj-stats-user"><div class="bj-stats-avatar">${user.slice(0,2).toUpperCase()}</div><span>${user}</span></div></td>
+                    <td>$${bet.toLocaleString('en-US',{minimumFractionDigits:2,maximumFractionDigits:2})}</td>
+                    <td class="bj-stats-mult">${mult.toFixed(2)}×</td>
+                    <td class="bj-stats-payout">$${payout.toLocaleString('en-US',{minimumFractionDigits:2,maximumFractionDigits:2})}</td>
+                    <td>${bjRandDate()}</td>
+                </tr>
+            `;
+        }
+        body.innerHTML = rows;
+    }
+
+    let bjLiveBetsData = [];
+    function bjGenerateLiveBet() {
+        const game = BJ_FAKE_GAMES[Math.floor(Math.random() * BJ_FAKE_GAMES.length)];
+        const bet = bjRandAmount() * 0.3; // smaller bets for live feed
+        const mult = parseFloat(bjRandMult());
+        const win = Math.random() > 0.45;
+        const payout = win ? bet * mult : 0;
+        const user = bjRandUser();
+        return { game, bet, mult, payout, win, user, time: bjRandTimeAgo() };
+    }
+    function bjRenderLiveBets() {
+        const body = $('#bjLiveBetsBody');
+        if (!body) return;
+        // Ensure we have enough data
+        while (bjLiveBetsData.length < 12) {
+            bjLiveBetsData.unshift(bjGenerateLiveBet());
+        }
+        body.innerHTML = bjLiveBetsData.map(b => `
+            <tr>
+                <td><span class="bj-live-game-tag"><span class="bj-live-dot"></span>${b.game.name}</span></td>
+                <td><div class="bj-stats-user"><div class="bj-stats-avatar">${b.user.slice(0,2).toUpperCase()}</div><span>${b.user}</span></div></td>
+                <td>${b.time}</td>
+                <td>$${b.bet.toLocaleString('en-US',{minimumFractionDigits:2,maximumFractionDigits:2})}</td>
+                <td>${b.mult.toFixed(2)}×</td>
+                <td class="${b.win ? 'bj-live-payout-win' : 'bj-live-payout-loss'}">${b.win ? '+' : ''}$${b.payout.toLocaleString('en-US',{minimumFractionDigits:2,maximumFractionDigits:2})}</td>
+            </tr>
+        `).join('');
+    }
+    function bjAddLiveBet() {
+        bjLiveBetsData.unshift(bjGenerateLiveBet());
+        if (bjLiveBetsData.length > 20) bjLiveBetsData.pop();
+        bjRenderLiveBets();
+    }
+
+    function bjRenderOriginalsStrip() {
+        const container = $('#bjOriginalsScroll');
+        if (!container) return;
+        const originals = BJ_FAKE_GAMES.filter(g => g.name !== 'Blackjack');
+        container.innerHTML = originals.map(g => `
+            <div class="bj-orig-mini" data-nav="${g.name.toLowerCase()}" style="background-image:url('${g.image}')"></div>
+        `).join('');
+        // Add click handlers
+        container.querySelectorAll('.bj-orig-mini').forEach(el => {
+            el.addEventListener('click', () => navigateTo(el.dataset.nav));
+        });
+    }
+
     function initBlackjack() {
         bjDeck = createDeck();
         renderHistory();
         updateBetInput();
         setActionsEnabled(false);
+
+        // Initialize stats & live bets
+        bjRenderBigWins();
+        bjRenderLuckyWins();
+        bjRenderLiveBets();
+        bjRenderOriginalsStrip();
+
+        // Tab switching
+        $$('.bj-stats-tab').forEach(tab => {
+            tab.addEventListener('click', () => {
+                $$('.bj-stats-tab').forEach(t => t.classList.remove('active'));
+                tab.classList.add('active');
+                const target = tab.dataset.tab;
+                $$('[data-tab-content]').forEach(c => c.classList.toggle('hidden', c.dataset.tabContent !== target));
+                if (target === 'bigwins') bjRenderBigWins();
+                if (target === 'luckywins') bjRenderLuckyWins();
+            });
+        });
+
+        // Live bets auto-feed
+        const liveInterval = setInterval(() => {
+            const toggle = $('#bjLiveBetsToggle');
+            if (toggle && toggle.checked) bjAddLiveBet();
+        }, 2800);
+
+        // Live bets filter
+        $$('.bj-live-filter').forEach(btn => {
+            btn.addEventListener('click', () => {
+                $$('.bj-live-filter').forEach(b => b.classList.remove('active'));
+                btn.classList.add('active');
+            });
+        });
 
         // Amount input
         $('#bjBetInput')?.addEventListener('change', () => {

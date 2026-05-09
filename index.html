@@ -10,7 +10,7 @@
     <link rel="preconnect" href="https://fonts.googleapis.com">
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
     <link href="https://fonts.googleapis.com/css2?family=Tektur:wght@400;500;600;700;800;900&family=Hanken+Grotesk:wght@300;400;500;600;700;800&family=Azeret+Mono:wght@400;500;600;700&display=swap" rel="stylesheet">
-    <link rel="stylesheet" href="css/style.css?v=6">
+    <link rel="stylesheet" href="css/style.css?v=7">
     <script src="https://cdn.socket.io/4.5.4/socket.io.min.js"></script>
 </head>
 <body>
@@ -544,6 +544,113 @@
                             <div class="bj-fair-row"><span>Nonce</span><code id="fairNonce">---</code></div>
                             <button class="bj-modal-close" id="bjFairClose">Close</button>
                         </div>
+                    </div>
+
+                    <!-- Recent Wins / Stats Section -->
+                    <div class="bj-stats-section">
+                        <div class="bj-stats-inner">
+                            <div class="bj-stats-card">
+                                <div class="bj-stats-thumb">
+                                    <div class="bj-stats-thumb-inner">
+                                        <span class="bj-stats-thumb-suit">♠</span>
+                                        <span class="bj-stats-thumb-suit">♥</span>
+                                        <div class="bj-stats-thumb-title">BLACKJACK</div>
+                                        <div class="bj-stats-thumb-sub">DONK</div>
+                                    </div>
+                                </div>
+                                <div class="bj-stats-meta">
+                                    <div class="bj-stats-label">Originals</div>
+                                    <div class="bj-stats-name">Blackjack</div>
+                                    <div class="bj-stats-bets"><span id="bjTotalBets">160,054,894</span> Bets</div>
+                                </div>
+                            </div>
+                            <div class="bj-stats-panel">
+                                <div class="bj-stats-tabs">
+                                    <button class="bj-stats-tab active" data-tab="bigwins">Big Wins</button>
+                                    <button class="bj-stats-tab" data-tab="luckywins">Lucky Wins</button>
+                                    <button class="bj-stats-tab" data-tab="description">Description</button>
+                                </div>
+                                <div class="bj-stats-content">
+                                    <div class="bj-stats-table-wrap" data-tab-content="bigwins">
+                                        <table class="bj-stats-table">
+                                            <thead>
+                                                <tr>
+                                                    <th>#</th>
+                                                    <th>User</th>
+                                                    <th>Bet Amount</th>
+                                                    <th>Multiplier</th>
+                                                    <th>Payout</th>
+                                                    <th>Date</th>
+                                                </tr>
+                                            </thead>
+                                            <tbody id="bjBigWinsBody"></tbody>
+                                        </table>
+                                    </div>
+                                    <div class="bj-stats-table-wrap hidden" data-tab-content="luckywins">
+                                        <table class="bj-stats-table">
+                                            <thead>
+                                                <tr>
+                                                    <th>#</th>
+                                                    <th>User</th>
+                                                    <th>Bet Amount</th>
+                                                    <th>Multiplier</th>
+                                                    <th>Payout</th>
+                                                    <th>Date</th>
+                                                </tr>
+                                            </thead>
+                                            <tbody id="bjLuckyWinsBody"></tbody>
+                                        </table>
+                                    </div>
+                                    <div class="bj-stats-desc hidden" data-tab-content="description">
+                                        <h4>Blackjack Originals</h4>
+                                        <p>Play Blackjack Online at Donk. Classic casino blackjack with a low house edge and provably fair gameplay. Hit, Stand, Double Down, or Split your way to 21.</p>
+                                        <div class="bj-stats-desc-row"><span>RTP</span><strong>99.52%</strong></div>
+                                        <div class="bj-stats-desc-row"><span>House Edge</span><strong>0.48%</strong></div>
+                                        <div class="bj-stats-desc-row"><span>Max Bet</span><strong>$500,000</strong></div>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- Other Originals Strip -->
+                    <div class="bj-originals-strip">
+                        <div class="bj-originals-header">
+                            <span>Other Donk Originals</span>
+                            <a href="#originals" data-nav="originals">View All →</a>
+                        </div>
+                        <div class="bj-originals-scroll" id="bjOriginalsScroll"></div>
+                    </div>
+
+                    <!-- Live Bets Feed -->
+                    <div class="bj-live-bets">
+                        <div class="bj-live-bets-header">
+                            <div class="bj-live-bets-left">
+                                <button class="bj-live-filter active" data-filter="all">All Bets</button>
+                                <button class="bj-live-filter" data-filter="high">High Rollers</button>
+                                <button class="bj-live-filter" data-filter="mine">My Bets</button>
+                            </div>
+                            <div class="bj-live-bets-right">
+                                <label class="bj-live-toggle">
+                                    <input type="checkbox" id="bjLiveBetsToggle" checked>
+                                    <span class="bj-live-toggle-slider"></span>
+                                    <span class="bj-live-toggle-label">Live Bets</span>
+                                </label>
+                            </div>
+                        </div>
+                        <table class="bj-live-bets-table">
+                            <thead>
+                                <tr>
+                                    <th>Game</th>
+                                    <th>Player</th>
+                                    <th>Time</th>
+                                    <th>Bet Amount</th>
+                                    <th>Multiplier</th>
+                                    <th>Payout</th>
+                                </tr>
+                            </thead>
+                            <tbody id="bjLiveBetsBody"></tbody>
+                        </table>
                     </div>
                 </div>
 
@@ -2134,7 +2241,7 @@
     <!-- Toast Notification -->
     <div class="toast-container" id="toastContainer"></div>
 
-    <script src="js/main.js?v=5"></script>
+    <script src="js/main.js?v=6"></script>
     <script src="js/roulette.js?v=4"></script>
     <script src="js/poker.js?v=5"></script>
     <script src="js/texasholdem.js?v=4"></script>
