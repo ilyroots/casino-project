@@ -4031,12 +4031,14 @@ body:hover .cursor-glow {
     background: var(--void);
     padding: 12px;
     gap: 10px;
+    height: auto;
+    min-height: 100%;
 }
 
 .bj-layout {
     display: flex;
     flex: 1;
-    min-height: 0;
+    min-height: 420px;
     overflow: hidden;
     background: var(--surface);
     border: 1px solid var(--border);
