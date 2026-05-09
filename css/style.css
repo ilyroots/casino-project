@@ -1171,7 +1171,7 @@ body:hover .cursor-glow {
     background: var(--surface);
     border: 1px solid var(--border-subtle);
     transition: all 0.35s var(--ease-out-expo);
-    aspect-ratio: 3 / 4;
+    aspect-ratio: 4 / 5;
 }
 .game-card::before {
     content: '';
@@ -1204,9 +1204,8 @@ body:hover .cursor-glow {
     transition: transform 0.5s var(--ease-out-expo);
     overflow: hidden;
     border-radius: inherit;
-    background-size: contain;
+    background-size: cover;
     background-position: center;
-    background-repeat: no-repeat;
 }
 .game-thumb img {
     width: 100%;
