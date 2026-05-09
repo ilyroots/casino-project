@@ -2365,10 +2365,19 @@
     let hiloBet = 10, hiloMult = 1.0, hiloStreak = 0, hiloHistory = [], hiloNonce = 0;
     let hiloCurrentCard = null, hiloDeck = [], hiloInProgress = false;
     let hiloSeeds = { server: gameGenerateSeed(), client: gameGenerateSeed() };
+
+    function hiloCardValue(rank) {
+        if (rank === 'A') return 1;
+        if (rank === 'J') return 11;
+        if (rank === 'Q') return 12;
+        if (rank === 'K') return 13;
+        return parseInt(rank);
+    }
+
     const HILO_DECK = [];
     for (const s of ['♠','♥','♣','♦']) {
         for (const r of ['A','2','3','4','5','6','7','8','9','10','J','Q','K']) {
-            HILO_DECK.push({ suit: s, rank: r, value: cardValue(r) });
+            HILO_DECK.push({ suit: s, rank: r, value: hiloCardValue(r) });
         }
     }
 
@@ -2394,13 +2403,37 @@
         container.scrollLeft = container.scrollWidth;
     }
 
+    function getHiloFactor(direction) {
+        if (!hiloCurrentCard) return 1;
+        const v = hiloCurrentCard.value; // 1-13
+        const higherCount = 13 - v;
+        const lowerCount = v - 1;
+        if (direction === 'higher' && higherCount === 0) return 1;
+        if (direction === 'lower' && lowerCount === 0) return 1;
+        const count = direction === 'higher' ? higherCount : lowerCount;
+        // Fair odds: 12 / count  (12 other possible ranks)
+        // With ~4% house edge: multiply by 0.96, minimum 1.03
+        return Math.max(1.03, (12 / count) * 0.96);
+    }
+
     function updateHiloUI() {
-        const higherMult = (hiloMult * (1 + 0.96 * (1 - hiloCurrentCard.value / 13))).toFixed(2);
-        const lowerMult = (hiloMult * (1 + 0.96 * (hiloCurrentCard.value / 13))).toFixed(2);
+        if (!hiloCurrentCard) {
+            $('#hiloCurrentMult').textContent = '1.00×';
+            $('#hiloNextMult').textContent = '--- / ---';
+            $('#hiloHigherBtn').disabled = true;
+            $('#hiloLowerBtn').disabled = true;
+            $('#hiloCashoutBtn').disabled = true;
+            $('#hiloStartBtn').classList.remove('hidden');
+            return;
+        }
+        const higherFactor = getHiloFactor('higher');
+        const lowerFactor = getHiloFactor('lower');
+        const higherMult = (hiloMult * higherFactor).toFixed(2);
+        const lowerMult = (hiloMult * lowerFactor).toFixed(2);
         $('#hiloCurrentMult').textContent = hiloMult.toFixed(2) + '×';
         $('#hiloNextMult').textContent = `${higherMult}× / ${lowerMult}×`;
-        $('#hiloHigherBtn').disabled = !hiloInProgress;
-        $('#hiloLowerBtn').disabled = !hiloInProgress;
+        $('#hiloHigherBtn').disabled = !hiloInProgress || hiloCurrentCard.value >= 13;
+        $('#hiloLowerBtn').disabled = !hiloInProgress || hiloCurrentCard.value <= 1;
         $('#hiloCashoutBtn').disabled = !hiloInProgress || hiloStreak === 0;
         $('#hiloStartBtn').classList.toggle('hidden', hiloInProgress);
     }
@@ -2431,14 +2464,12 @@
         renderHiloCard(nextCard, $('#hiloCardArea'));
         const isHigher = nextCard.value > hiloCurrentCard.value;
         const isEqual = nextCard.value === hiloCurrentCard.value;
-        const win = isEqual || (direction === 'higher' && isHigher) || (direction === 'lower' && !isHigher);
+        // Ties are losses (house edge)
+        const win = !isEqual && ((direction === 'higher' && isHigher) || (direction === 'lower' && !isHigher));
 
         if (win) {
             hiloStreak++;
-            const factor = direction === 'higher'
-                ? (1 + 0.96 * (1 - hiloCurrentCard.value / 13))
-                : (1 + 0.96 * (hiloCurrentCard.value / 13));
-            hiloMult *= factor;
+            hiloMult *= getHiloFactor(direction);
             hiloCurrentCard = nextCard;
             gamePlaySound('click');
             const dot = document.createElement('div');
@@ -2475,6 +2506,7 @@
             bjSoundOn = !bjSoundOn;
             $('#hiloSoundToggle').textContent = bjSoundOn ? '🔊' : '🔇';
         });
+        updateHiloUI();
     }
 
     // ═══════════════════════════════════════════════
